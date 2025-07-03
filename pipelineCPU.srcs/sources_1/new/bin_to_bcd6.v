@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module bin_to_bcd6(
     input  wire [31:0] bin,
     output reg  [3:0] d5,

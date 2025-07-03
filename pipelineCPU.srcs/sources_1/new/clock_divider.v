@@ -1,4 +1,5 @@
-module clock_divider #(parameter WIDTH = 24)(
+`timescale 1ns / 1ps
+module clock_divider #(parameter WIDTH = 26)(
     input wire clk_in,
     input wire reset,
     output wire clk_out

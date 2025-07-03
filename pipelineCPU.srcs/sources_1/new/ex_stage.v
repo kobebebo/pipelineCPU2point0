@@ -1,60 +1,61 @@
+`timescale 1ns / 1ps
 module ex_stage(
-    input  wire [31:0] pc,         // æ¥è‡ªID/EXçš„å½“å‰æŒ‡ä»¤PC
-    input  wire [31:0] rs1_val,    // å¯„å­˜å™¨rs1å€¼ï¼ˆID/EXï¼‰
-    input  wire [31:0] rs2_val,    // å¯„å­˜å™¨rs2å€¼ï¼ˆID/EXï¼‰
-    input  wire [31:0] imm,        // ç«‹å³æ•°ï¼ˆID/EXï¼‰
-    input  wire [4:0]  rs1_idx,    // æºå¯„å­˜å™¨1å·ï¼ˆç”¨äºå‰é€’åˆ¤æ–­ï¼‰
-    input  wire [4:0]  rs2_idx,    // æºå¯„å­˜å™¨2å·
-    input  wire [4:0]  rd_idx,     // ç›®çš„å¯„å­˜å™¨å·ï¼ˆID/EXï¼‰
-    input  wire        reg_write_in, // è¯¥æŒ‡ä»¤æ˜¯å¦å†™å›å¯„å­˜å™¨
-    input  wire        mem_read_in,  // æ˜¯å¦ä¸ºloadæŒ‡ä»¤
-    input  wire        mem_write_in, // æ˜¯å¦ä¸ºstoreæŒ‡ä»¤
-    input  wire [2:0]  mem_op_in,    // å†…å­˜æ“ä½œç±»å‹ï¼ˆfunct3ï¼‰
-    input  wire        branch_in,    // æ˜¯å¦ä¸ºæ¡ä»¶åˆ†æ”¯æŒ‡ä»¤
-    input  wire [1:0]   jump_in,      // æ˜¯å¦ä¸ºè·³è½¬æŒ‡ä»¤ (JAL/JALR)
-    input  wire [3:0]  alu_op,       // ALUæ“ä½œç ï¼ˆç”±æ§åˆ¶å•å…ƒç»™å‡ºï¼‰
-    input  wire        alu_src1_pc,  // ALUæ“ä½œæ•°1æ¥æºï¼š1=PC, 0=å¯„å­˜å™¨rs1
-    input  wire        alu_src2_imm, // ALUæ“ä½œæ•°2æ¥æºï¼š1=ç«‹å³æ•°,0=å¯„å­˜å™¨rs2
-    // å‰é€’ç›¸å…³è¾“å…¥ï¼šæ¥è‡ªEX/MEMå’ŒMEM/WBé˜¶æ®µç»“æœç”¨äºå¯èƒ½çš„å‰é€’
+    input  wire [31:0] pc,         // À´×ÔID/EXµÄµ±Ç°Ö¸ÁîPC
+    input  wire [31:0] rs1_val,    // ¼Ä´æÆ÷rs1Öµ£¨ID/EX£©
+    input  wire [31:0] rs2_val,    // ¼Ä´æÆ÷rs2Öµ£¨ID/EX£©
+    input  wire [31:0] imm,        // Á¢¼´Êı£¨ID/EX£©
+    input  wire [4:0]  rs1_idx,    // Ô´¼Ä´æÆ÷1ºÅ£¨ÓÃÓÚÇ°µİÅĞ¶Ï£©
+    input  wire [4:0]  rs2_idx,    // Ô´¼Ä´æÆ÷2ºÅ
+    input  wire [4:0]  rd_idx,     // Ä¿µÄ¼Ä´æÆ÷ºÅ£¨ID/EX£©
+    input  wire        reg_write_in, // ¸ÃÖ¸ÁîÊÇ·ñĞ´»Ø¼Ä´æÆ÷
+    input  wire        mem_read_in,  // ÊÇ·ñÎªloadÖ¸Áî
+    input  wire        mem_write_in, // ÊÇ·ñÎªstoreÖ¸Áî
+    input  wire [2:0]  mem_op_in,    // ÄÚ´æ²Ù×÷ÀàĞÍ£¨funct3£©
+    input  wire        branch_in,    // ÊÇ·ñÎªÌõ¼ş·ÖÖ§Ö¸Áî
+    input  wire [1:0]   jump_in,      // ÊÇ·ñÎªÌø×ªÖ¸Áî (JAL/JALR)
+    input  wire [3:0]  alu_op,       // ALU²Ù×÷Âë£¨ÓÉ¿ØÖÆµ¥Ôª¸ø³ö£©
+    input  wire        alu_src1_pc,  // ALU²Ù×÷Êı1À´Ô´£º1=PC, 0=¼Ä´æÆ÷rs1
+    input  wire        alu_src2_imm, // ALU²Ù×÷Êı2À´Ô´£º1=Á¢¼´Êı,0=¼Ä´æÆ÷rs2
+    // Ç°µİÏà¹ØÊäÈë£ºÀ´×ÔEX/MEMºÍMEM/WB½×¶Î½á¹ûÓÃÓÚ¿ÉÄÜµÄÇ°µİ
     input  wire [4:0]  ex_mem_rd,
     input  wire        ex_mem_reg_write,
     input  wire [31:0] ex_mem_alu_result,
     input  wire [4:0]  mem_wb_rd,
     input  wire        mem_wb_reg_write,
     input  wire [31:0] mem_wb_value,
-    // è¾“å‡º
-    output reg  [31:0] alu_result,    // ALUè¿ç®—ç»“æœè¾“å‡ºï¼ˆEX/MEMï¼‰
-    output reg  [31:0] forwarded_rs2, // è½¬å‘åçš„rs2å€¼ï¼ˆç»™storeä½¿ç”¨çš„å€¼ï¼‰
-    output reg         branch_taken,  // åˆ†æ”¯æ˜¯å¦æˆç«‹ï¼ˆè·³è½¬ä¿¡å·ï¼‰
-    output reg  [31:0] branch_target, // è·³è½¬ç›®æ ‡åœ°å€
-    output wire [4:0]  rd_idx_out,    // ä¼ é€’ç›®çš„å¯„å­˜å™¨å·
-    output wire        reg_write_out, // ä¼ é€’æ˜¯å¦å†™å›ä¿¡å·
-    output wire        mem_read_out,  // ä¼ é€’è®¿å­˜è¯»æ§åˆ¶
-    output wire        mem_write_out, // ä¼ é€’è®¿å­˜å†™æ§åˆ¶
-    output wire [2:0]  mem_op_out     // ä¼ é€’å†…å­˜æ“ä½œç±»å‹
+    // Êä³ö
+    output reg  [31:0] alu_result,    // ALUÔËËã½á¹ûÊä³ö£¨EX/MEM£©
+    output reg  [31:0] forwarded_rs2, // ×ª·¢ºóµÄrs2Öµ£¨¸østoreÊ¹ÓÃµÄÖµ£©
+    output reg         branch_taken,  // ·ÖÖ§ÊÇ·ñ³ÉÁ¢£¨Ìø×ªĞÅºÅ£©
+    output reg  [31:0] branch_target, // Ìø×ªÄ¿±êµØÖ·
+    output wire [4:0]  rd_idx_out,    // ´«µİÄ¿µÄ¼Ä´æÆ÷ºÅ
+    output wire        reg_write_out, // ´«µİÊÇ·ñĞ´»ØĞÅºÅ
+    output wire        mem_read_out,  // ´«µİ·Ã´æ¶Á¿ØÖÆ
+    output wire        mem_write_out, // ´«µİ·Ã´æĞ´¿ØÖÆ
+    output wire [2:0]  mem_op_out     // ´«µİÄÚ´æ²Ù×÷ÀàĞÍ
 );
-    // å°†IDé˜¶æ®µçš„æ§åˆ¶ä¿¡å·ç›´æ¥ä¼ é€’è¾“å‡ºï¼ˆå¤§éƒ¨åˆ†æ§åˆ¶ä¿¡å·æ— éœ€ä¿®æ”¹ç›´æ¥è¿›å…¥ä¸‹ä¸€æµæ°´æ®µï¼‰
+    // ½«ID½×¶ÎµÄ¿ØÖÆĞÅºÅÖ±½Ó´«µİÊä³ö£¨´ó²¿·Ö¿ØÖÆĞÅºÅÎŞĞèĞŞ¸ÄÖ±½Ó½øÈëÏÂÒ»Á÷Ë®¶Î£©
     assign rd_idx_out    = rd_idx;
     assign reg_write_out = reg_write_in;
     assign mem_read_out  = mem_read_in;
     assign mem_write_out = mem_write_in;
     assign mem_op_out    = mem_op_in;
     
-    // å‰é€’ï¼šé€‰æ‹©EXé˜¶æ®µæ“ä½œæ•°çš„æœ€ç»ˆå€¼
-    // é»˜è®¤ä½¿ç”¨æ¥è‡ªID/EXå¯„å­˜å™¨çš„å€¼ï¼Œå¦‚æœ‰åç»­ç»“æœç›¸å…³åˆ™æ›¿æ¢
+    // Ç°µİ£ºÑ¡ÔñEX½×¶Î²Ù×÷ÊıµÄ×îÖÕÖµ
+    // Ä¬ÈÏÊ¹ÓÃÀ´×ÔID/EX¼Ä´æÆ÷µÄÖµ£¬ÈçÓĞºóĞø½á¹ûÏà¹ØÔòÌæ»»
     reg [31:0] op_a, op_b;
-    reg [31:0] rs2_val_forwarded; // ç”¨äºstoreçš„rs2æœ€ç»ˆå€¼
+    reg [31:0] rs2_val_forwarded; // ÓÃÓÚstoreµÄrs2×îÖÕÖµ
     always @(*) begin
-        // å‰é€’ç»™æ“ä½œæ•°A (rs1)
+        // Ç°µİ¸ø²Ù×÷ÊıA (rs1)
         if (ex_mem_reg_write && ex_mem_rd != 5'd0 && ex_mem_rd == rs1_idx) begin
-            op_a = ex_mem_alu_result;  // æ¥è‡ªä¸Šæ¡æŒ‡ä»¤EX/MEMé˜¶æ®µçš„ç»“æœ
+            op_a = ex_mem_alu_result;  // À´×ÔÉÏÌõÖ¸ÁîEX/MEM½×¶ÎµÄ½á¹û
         end else if (mem_wb_reg_write && mem_wb_rd != 5'd0 && mem_wb_rd == rs1_idx) begin
-            op_a = mem_wb_value;       // æ¥è‡ªä¸¤æ¡å‰æŒ‡ä»¤MEM/WBé˜¶æ®µçš„ç»“æœ
+            op_a = mem_wb_value;       // À´×ÔÁ½ÌõÇ°Ö¸ÁîMEM/WB½×¶ÎµÄ½á¹û
         end else begin
-            op_a = rs1_val;            // æ— å‰é€’ï¼Œç›´æ¥ç”¨å¯„å­˜å™¨å€¼
+            op_a = rs1_val;            // ÎŞÇ°µİ£¬Ö±½ÓÓÃ¼Ä´æÆ÷Öµ
         end
         
-        // å‰é€’ç»™æ“ä½œæ•°B (rs2) - æ³¨æ„: ALUçš„ç¬¬äºŒæ“ä½œæ•°å¯èƒ½ç”¨immï¼Œä¸ä¸€å®šç”¨rs2
+        // Ç°µİ¸ø²Ù×÷ÊıB (rs2) - ×¢Òâ: ALUµÄµÚ¶ş²Ù×÷Êı¿ÉÄÜÓÃimm£¬²»Ò»¶¨ÓÃrs2
         if (ex_mem_reg_write && ex_mem_rd != 5'd0 && ex_mem_rd == rs2_idx) begin
             rs2_val_forwarded = ex_mem_alu_result;
         end else if (mem_wb_reg_write && mem_wb_rd != 5'd0 && mem_wb_rd == rs2_idx) begin
@@ -63,79 +64,79 @@ module ex_stage(
             rs2_val_forwarded = rs2_val;
         end
         
-        // æ ¹æ®æ§åˆ¶ï¼Œå†³å®šALUçœŸæ­£è¾“å…¥ï¼š
-        // æ“ä½œæ•°1:
+        // ¸ù¾İ¿ØÖÆ£¬¾ö¶¨ALUÕæÕıÊäÈë£º
+        // ²Ù×÷Êı1:
         if (alu_src1_pc) 
-            op_a = pc;       // ä½¿ç”¨å½“å‰PCä½œä¸ºAæ“ä½œæ•°
-        // å¦åˆ™op_aå·²æ˜¯æ­£ç¡®çš„rs1å€¼(å«å‰é€’)
-        // æ“ä½œæ•°2:
+            op_a = pc;       // Ê¹ÓÃµ±Ç°PC×÷ÎªA²Ù×÷Êı
+        // ·ñÔòop_aÒÑÊÇÕıÈ·µÄrs1Öµ(º¬Ç°µİ)
+        // ²Ù×÷Êı2:
         if (alu_src2_imm) 
-            op_b = imm;      // ä½¿ç”¨ç«‹å³æ•°ä½œä¸ºBæ“ä½œæ•°
+            op_b = imm;      // Ê¹ÓÃÁ¢¼´Êı×÷ÎªB²Ù×÷Êı
         else 
-            op_b = rs2_val_forwarded;  // ä½¿ç”¨å¯„å­˜å™¨å€¼ä½œä¸ºBæ“ä½œæ•°
+            op_b = rs2_val_forwarded;  // Ê¹ÓÃ¼Ä´æÆ÷Öµ×÷ÎªB²Ù×÷Êı
     end
     
-    // ALUè®¡ç®—
+    // ALU¼ÆËã
     reg zero_flag;
     always @(*) begin
         case (alu_op)
             4'b0000: alu_result = op_a + op_b;            // ADD
             4'b0001: alu_result = op_a - op_b;            // SUB
-            4'b0010: alu_result = op_a << (op_b[4:0]);    // SLL (é€»è¾‘å·¦ç§»)
-            4'b0011: alu_result = ($signed(op_a) < $signed(op_b)) ? 32'd1 : 32'd0;  // SLT (æœ‰ç¬¦å·æ¯”è¾ƒ)
-            4'b0100: alu_result = (op_a < op_b) ? 32'd1 : 32'd0;  // SLTU (æ— ç¬¦å·æ¯”è¾ƒ)
+            4'b0010: alu_result = op_a << (op_b[4:0]);    // SLL (Âß¼­×óÒÆ)
+            4'b0011: alu_result = ($signed(op_a) < $signed(op_b)) ? 32'd1 : 32'd0;  // SLT (ÓĞ·ûºÅ±È½Ï)
+            4'b0100: alu_result = (op_a < op_b) ? 32'd1 : 32'd0;  // SLTU (ÎŞ·ûºÅ±È½Ï)
             4'b0101: alu_result = op_a ^ op_b;            // XOR
-            4'b0110: alu_result = op_a >> (op_b[4:0]);    // SRL (é€»è¾‘å³ç§»)
-            4'b0111: alu_result = ($signed(op_a)) >>> (op_b[4:0]); // SRA (ç®—æœ¯å³ç§»)
+            4'b0110: alu_result = op_a >> (op_b[4:0]);    // SRL (Âß¼­ÓÒÒÆ)
+            4'b0111: alu_result = ($signed(op_a)) >>> (op_b[4:0]); // SRA (ËãÊõÓÒÒÆ)
             4'b1000: alu_result = op_a | op_b;            // OR
             4'b1001: alu_result = op_a & op_b;            // AND
-            4'b1010: alu_result = op_b;                   // PASSB (ç›´æ¥è¾“å‡ºç¬¬äºŒæ“ä½œæ•°ï¼Œç”¨äºLUI)
+            4'b1010: alu_result = op_b;                   // PASSB (Ö±½ÓÊä³öµÚ¶ş²Ù×÷Êı£¬ÓÃÓÚLUI)
             default: alu_result = op_a + op_b;
         endcase
-        // è®¡ç®—é›¶æ ‡å¿—ç”¨äºåˆ†æ”¯åˆ¤æ–­
+        // ¼ÆËãÁã±êÖ¾ÓÃÓÚ·ÖÖ§ÅĞ¶Ï
         
         zero_flag = (alu_result == 32'b0);
     //end
     
     
     
-    // åˆ†æ”¯ä¸è·³è½¬åˆ¤å®š
+    // ·ÖÖ§ÓëÌø×ªÅĞ¶¨
     //always @(*) begin
         branch_taken = 1'b0;
         branch_target = 32'b0;
         if (branch_in) begin
-            // æ¡ä»¶åˆ†æ”¯ï¼Œæ ¹æ®funct3å†³å®šåˆ¤æ–­æ¡ä»¶
-            case (mem_op_in[2:0])  // reuse mem_op_inå­˜å‚¨äº†åŸinstrçš„funct3ä½ï¼Œå¯è¡¨ç¤ºåˆ†æ”¯ç±»å‹
+            // Ìõ¼ş·ÖÖ§£¬¸ù¾İfunct3¾ö¶¨ÅĞ¶ÏÌõ¼ş
+            case (mem_op_in[2:0])  // reuse mem_op_in´æ´¢ÁËÔ­instrµÄfunct3Î»£¬¿É±íÊ¾·ÖÖ§ÀàĞÍ
                 3'b000: branch_taken = (op_a == op_b);   // BEQ
                 3'b001: branch_taken = (op_a != op_b);   // BNE
                 3'b100: branch_taken = ($signed(op_a) < $signed(op_b));  // BLT
                 3'b101: branch_taken = ($signed(op_a) >= $signed(op_b)); // BGE
                 3'b110: branch_taken = (op_a < op_b);    // BLTU
-                3'b111: branch_taken = (op_a >= op_b);   // BGEU (æ— ç¬¦å·>=)
+                3'b111: branch_taken = (op_a >= op_b);   // BGEU (ÎŞ·ûºÅ>=)
                 default: branch_taken = 1'b0;
             endcase
             if (branch_taken) begin
-                // ç›®æ ‡åœ°å€ = å½“å‰PC + ç«‹å³æ•°åç§»
+                // Ä¿±êµØÖ· = µ±Ç°PC + Á¢¼´ÊıÆ«ÒÆ
                 branch_target = pc + imm;
             end
         end
         if (jump_in[1]||jump_in[0]) begin
-            // JAL or JALR: æ— æ¡ä»¶è·³è½¬
+            // JAL or JALR: ÎŞÌõ¼şÌø×ª
             branch_taken = 1'b1;
             if (jump_in[1]) begin
-                // JAL: ç›®æ ‡ = pc + imm (immåœ¨IDé˜¶æ®µå·²è®¡ç®—ä¸º21ä½åç§»)
+                // JAL: Ä¿±ê = pc + imm (immÔÚID½×¶ÎÒÑ¼ÆËãÎª21Î»Æ«ÒÆ)
                 branch_target = pc + imm;
             end else begin
                 // JALR: opcode 1100111
-                // ç›®æ ‡ = (rs1 + imm) & ~1
+                // Ä¿±ê = (rs1 + imm) & ~1
                 branch_target = (op_a + imm) & 32'hFFFFFFFE;
             end
-            // JAL/JALRéœ€è¦å°†è¿”å›åœ°å€PC+4å†™å…¥rd:
-            // è¿™é‡Œç›´æ¥å°† alu_result æ”¹ä¸º pc+4ï¼Œä»¥ä¾¿å†™å›é˜¶æ®µå†™å…¥
+            // JAL/JALRĞèÒª½«·µ»ØµØÖ·PC+4Ğ´Èërd:
+            // ÕâÀïÖ±½Ó½« alu_result ¸ÄÎª pc+4£¬ÒÔ±ãĞ´»Ø½×¶ÎĞ´Èë
             alu_result = pc + 32'd4;
         end
     end
-    // forwarded_rs2 ç”¨äºè®¿å­˜é˜¶æ®µStoreçš„æ•°æ®è¾“å…¥
+    // forwarded_rs2 ÓÃÓÚ·Ã´æ½×¶ÎStoreµÄÊı¾İÊäÈë
     always @(*) begin
         forwarded_rs2 = rs2_val_forwarded;
     end
