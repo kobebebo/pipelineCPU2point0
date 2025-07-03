@@ -1,9 +1,0 @@
-# 所有文本文件都当做 UTF-8 处理
-* text working-tree-encoding=UTF-8
-
-cpu_top.v   working-tree-encoding=GBK
-ex_stage.v  working-tree-encoding=GBK
-hazard_unit.v  working-tree-encoding=GBK
-id_stage.v  working-tree-encoding=GBK
-mem_stage.v  working-tree-encoding=GBK
-
