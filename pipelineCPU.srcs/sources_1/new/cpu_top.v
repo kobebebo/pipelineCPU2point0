@@ -11,10 +11,19 @@ module cpu_top(
     // 时钟与复位信号
     wire reset = ~rstn;  // 将低有效复位转换为高有效的reset信号
 
-    // 时钟分频/选择: 使用sw_i[15]控制时钟速度 (可选实现)
-    // 若需要，可在此插入分频器，将clk_div作为各模块时钟
-    wire clk_cpu = clk; // 简化：直接使用板上时钟，无分频
-    // TODO: 可实现时钟分频逻辑，例如计数器达到一定值翻转clk_div，从而得到慢速时钟用于观察
+    // 调试/控制信号
+    wire debug_pause   = sw_i[0];      // =1暂停CPU运行
+    wire display_regs  = sw_i[14];     // =1显示寄存器
+    wire fast_clk_sel  = sw_i[15];     // =1使用原始时钟
+
+    // 时钟分频：当sw_i[15]=0时使用慢速时钟，便于观察
+    wire slow_clk;
+    clock_divider #(.WIDTH(25)) div_u(
+        .clk_in (clk),
+        .reset  (reset),
+        .clk_out(slow_clk)
+    );
+    wire clk_cpu = fast_clk_sel ? clk : slow_clk;
     
     // -------------------------------
     // 信号定义：流水线各阶段之间的连线
@@ -40,6 +49,9 @@ module cpu_top(
     // 冒险检测单元输出
     wire        hazard_stall;   // 流水线暂停（插入等待周期）
     wire        hazard_flush;   // EX阶段插入气泡（将ID/EX清除为NOP）
+    // 调试显示相关
+    reg  [4:0]  dbg_reg_idx;
+    wire [31:0] dbg_reg_val;
     // ID/EX -> EX阶段
     reg [31:0] id_ex_pc;
     reg [31:0] id_ex_rs1_val;
@@ -94,7 +106,7 @@ module cpu_top(
         if (reset) begin
             pc <= 32'h0000_0000;  // 复位时PC从0地址开始
         end else begin
-            if (!hazard_stall) begin
+            if (!hazard_stall && !debug_pause) begin
                 // 非暂停时更新PC：优先分支/跳转目标，否则PC+4
                 pc <= ex_branch_taken ? ex_branch_target : pc + 32'd4;
             end else begin
@@ -116,7 +128,7 @@ module cpu_top(
             if_id_instr <= 32'b0;
             if_id_pc    <= 32'b0;
         end else begin
-            if (!hazard_stall) begin
+            if (!hazard_stall && !debug_pause) begin
                 if_id_instr <= (ex_branch_taken ? 32'b0 : if_instr);
                 // 若发生跳转，则把取到的错误指令清除为0（NOP），实现flush IF/ID
                 if_id_pc    <= (ex_branch_taken ? 32'b0 : pc);
@@ -150,7 +162,9 @@ module cpu_top(
         .clk         (clk_cpu),
         .reset       (reset),
         // 冒险单元信号
-        .hazard_stall(hazard_stall)
+        .hazard_stall(hazard_stall),
+        .dbg_reg_idx (dbg_reg_idx),
+        .dbg_reg_val (dbg_reg_val)
     );
     
     // 冒险检测单元：检测load-use型数据冒险
@@ -202,7 +216,7 @@ module cpu_top(
                 id_ex_alu_op     <= 4'b0;
                 id_ex_alu_src1_pc<= 1'b0;
                 id_ex_alu_src2_imm<=1'b0;
-            end else if (!hazard_stall) begin
+            end else if (!hazard_stall && !debug_pause) begin
                 // 正常传递译码结果进入EX阶段
                 id_ex_pc         <= if_id_pc;
                 id_ex_rs1_val    <= id_rs1_val;
@@ -274,7 +288,7 @@ module cpu_top(
             ex_mem_mem_read   <= 1'b0;
             ex_mem_mem_write  <= 1'b0;
             ex_mem_mem_op     <= 3'b0;
-        end else begin
+        end else if (!debug_pause) begin
             ex_mem_alu_result <= ex_alu_result;
             ex_mem_store_val  <= ex_forwarded_rs2;  // Store指令需要写入内存的数据（已经过前递修正）
             ex_mem_rd         <= id_ex_rd;
@@ -308,7 +322,7 @@ module cpu_top(
             mem_wb_value_r   <= 32'b0;
             mem_wb_rd        <= 5'b0;
             mem_wb_reg_write <= 1'b0;
-        end else begin
+        end else if (!debug_pause) begin
             mem_wb_value_r   <= mem_wb_value;
             mem_wb_rd        <= ex_mem_rd;
             mem_wb_reg_write <= ex_mem_reg_write;
@@ -327,35 +341,65 @@ module cpu_top(
     // -------------------------------
     // 板上输出：LED和数码管调试显示
     // -------------------------------
-    // 简易调试：用 LED 显示某个寄存器或状态位 (这里示例用 LED 显示 x3 寄存器低16位)
-    assign led_o = id_stage_u.regs[3][15:0]; 
-    // 上述引用假设 id_stage 内部的寄存器数组 regs 为 public可见（需要在id_stage模块中将regs声明为 public for simulation）。
-    // 如果不方便直接访问内部寄存器，可在id_stage模块增加一个输出端口将某一寄存器值传出。
-    // 这里简单处理：假设Vivado支持这种层次引用(实际需要调整).
-    
-    // 数码管显示：显示当前PC的低4位16进制值在第0位数码管上
-    wire [3:0] pc_low_nibble = if_pc_curr[3:0];
-    reg [7:0] seg_pattern;
-    always @(*) begin
-        case(pc_low_nibble)
-            4'h0: seg_pattern = 8'b1100_0000; // 0
-            4'h1: seg_pattern = 8'b1111_1001; // 1
-            4'h2: seg_pattern = 8'b1010_0100; // 2
-            4'h3: seg_pattern = 8'b1011_0000; // 3
-            4'h4: seg_pattern = 8'b1001_1001; // 4
-            4'h5: seg_pattern = 8'b1001_0010; // 5
-            4'h6: seg_pattern = 8'b1000_0010; // 6
-            4'h7: seg_pattern = 8'b1111_1000; // 7
-            4'h8: seg_pattern = 8'b1000_0000; // 8
-            4'h9: seg_pattern = 8'b1001_0000; // 9
-            4'hA: seg_pattern = 8'b1000_1000; // A
-            4'hB: seg_pattern = 8'b1000_0011; // b
-            4'hC: seg_pattern = 8'b1100_0110; // C
-            4'hD: seg_pattern = 8'b1010_0001; // d
-            4'hE: seg_pattern = 8'b1000_0110; // E
-            4'hF: seg_pattern = 8'b1000_1110; // F
-        endcase
+    // LED显示示例：直接显示x3寄存器低16位
+    assign led_o = id_stage_u.regs[3][15:0];
+
+    // 调试寄存器索引循环
+    reg [22:0] disp_cnt;
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            disp_cnt <= 0;
+            dbg_reg_idx <= 0;
+        end else if (display_regs) begin
+            disp_cnt <= disp_cnt + 1;
+            if (disp_cnt == 23'd8_000_000) begin
+                disp_cnt <= 0;
+                if (dbg_reg_idx == 5'd31)
+                    dbg_reg_idx <= 0;
+                else
+                    dbg_reg_idx <= dbg_reg_idx + 1;
+            end
+        end else begin
+            disp_cnt <= 0;
+            dbg_reg_idx <= 0;
+        end
     end
-    assign disp_seg_o = seg_pattern;
-    assign disp_an_o  = 8'b1111_1110; // 仅启用最右侧的第0位数码管（假定低电平有效）
+
+    // PC和寄存器值数字准备
+    wire [3:0] pc_d0 = if_pc_curr[3:0];
+    wire [3:0] pc_d1 = if_pc_curr[7:4];
+    wire [3:0] pc_d2 = if_pc_curr[11:8];
+    wire [3:0] pc_d3 = if_pc_curr[15:12];
+    wire [3:0] pc_d4 = if_pc_curr[19:16];
+    wire [3:0] pc_d5 = if_pc_curr[23:20];
+    wire [3:0] pc_d6 = if_pc_curr[27:24];
+    wire [3:0] pc_d7 = if_pc_curr[31:28];
+
+    wire [3:0] bcd0,bcd1,bcd2,bcd3,bcd4,bcd5;
+    bin_to_bcd6 bcd_u(
+        .bin(dbg_reg_val),
+        .d5(bcd5),.d4(bcd4),.d3(bcd3),.d2(bcd2),.d1(bcd1),.d0(bcd0)
+    );
+
+    reg [3:0] dig0,dig1,dig2,dig3,dig4,dig5,dig6,dig7;
+    always @(*) begin
+        if (display_regs) begin
+            dig0 = bcd0; dig1 = bcd1; dig2 = bcd2; dig3 = bcd3; dig4 = bcd4; dig5 = bcd5;
+            dig6 = dbg_reg_idx[3:0];
+            dig7 = {3'b0, dbg_reg_idx[4]};
+        end else begin
+            dig0 = pc_d0; dig1 = pc_d1; dig2 = pc_d2; dig3 = pc_d3;
+            dig4 = pc_d4; dig5 = pc_d5; dig6 = pc_d6; dig7 = pc_d7;
+        end
+    end
+
+    // 数码管扫描驱动
+    seven_seg_driver disp_u(
+        .clk   (clk),
+        .reset (reset),
+        .d0(dig0),.d1(dig1),.d2(dig2),.d3(dig3),
+        .d4(dig4),.d5(dig5),.d6(dig6),.d7(dig7),
+        .seg(disp_seg_o),
+        .an (disp_an_o)
+    );
 endmodule

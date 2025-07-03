@@ -18,7 +18,9 @@ module id_stage(
     input  wire        wb_reg_write, // 写回使能信号
     input  wire        clk,
     input  wire        reset,
-    input  wire        hazard_stall  // 冒险暂停信号，高电平表示本周期ID阶段指令停顿，不更新输出
+    input  wire        hazard_stall, // 冒险暂停信号，高电平表示本周期ID阶段指令停顿，不更新输出
+    input  wire [4:0]  dbg_reg_idx,  // 调试读取的寄存器编号
+    output wire [31:0] dbg_reg_val
 );
     // 将指令字段拆分
     wire [6:0] opcode = instr[6:0];
@@ -38,6 +40,7 @@ module id_stage(
     // 异步读，同步写实现：
     assign rs1_val = regs[rs1_idx];
     assign rs2_val = regs[rs2_idx];
+    assign dbg_reg_val = regs[dbg_reg_idx];
     
     // 初始化寄存器（复位时）
     always @(posedge clk or posedge reset) begin
