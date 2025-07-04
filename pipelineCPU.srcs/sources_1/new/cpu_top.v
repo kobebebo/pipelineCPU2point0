@@ -8,14 +8,14 @@ module cpu_top(
     output wire [7:0]  disp_an_o  
 );
 
-    wire reset = ~rstn;  // ½«µÍÓĞĞ§¸´Î»×ª»»Îª¸ßÓĞĞ§µÄresetĞÅºÅ
+    wire reset = ~rstn;  // å°†ä½æœ‰æ•ˆå¤ä½è½¬æ¢ä¸ºé«˜æœ‰æ•ˆçš„resetä¿¡å·
 
-    // µ÷ÊÔ/¿ØÖÆĞÅºÅ
-    wire debug_pause   = sw_i[5];      // =1ÔİÍ£CPUÔËĞĞ
-    wire display_regs  = sw_i[10];     // =1ÏÔÊ¾¼Ä´æÆ÷
-    wire fast_clk_sel  = sw_i[15];     // =1Ê¹ÓÃÔ­Ê¼Ê±ÖÓ
+    // è°ƒè¯•/æ§åˆ¶ä¿¡å·
+    wire debug_pause   = sw_i[5];      // =1æš‚åœCPUè¿è¡Œ
+    wire display_regs  = sw_i[10];     // =1æ˜¾ç¤ºå¯„å­˜å™¨
+    wire fast_clk_sel  = sw_i[15];     // =1ä½¿ç”¨åŸå§‹æ—¶é’Ÿ
 
-    // Ê±ÖÓ·ÖÆµ£ºµ±sw_i[15]=0Ê±Ê¹ÓÃÂıËÙÊ±ÖÓ£¬±ãÓÚ¹Û²ì
+    // æ—¶é’Ÿåˆ†é¢‘ï¼šå½“sw_i[15]=0æ—¶ä½¿ç”¨æ…¢é€Ÿæ—¶é’Ÿï¼Œä¾¿äºè§‚å¯Ÿ
     wire slow_clk;
     clock_divider #(.WIDTH(26)) div_u(
         .clk_in (clk),
@@ -25,34 +25,34 @@ module cpu_top(
     wire clk_cpu = fast_clk_sel ? clk : slow_clk;
     
 
-    // ĞÅºÅ¶¨Òå£ºÁ÷Ë®Ïß¸÷½×¶ÎÖ®¼äµÄÁ¬Ïß
+    // ä¿¡å·å®šä¹‰ï¼šæµæ°´çº¿å„é˜¶æ®µä¹‹é—´çš„è¿çº¿
     
     
-    // IF½×¶Î -> IF/IDÁ÷Ë®¼Ä´æÆ÷
-    wire [31:0] if_pc_next;      // ¼ÆËã³öµÄÏÂÒ»ÌõPCµØÖ·
-    wire [31:0] if_instr;        // È¡³öµÄÖ¸Áî
-    wire [31:0] if_pc_curr;      // µ±Ç°PCÖµ£¨ÓÃÓÚÊä³ö/µ÷ÊÔ£©
-    // IF/ID -> ID½×¶Î
-    reg  [31:0] if_id_instr;     // IF/ID ¼Ä´æµÄÖ¸Áî
-    reg  [31:0] if_id_pc;        // IF/ID ¼Ä´æµÄµ±Ç°Ö¸ÁîPC
-    // ID½×¶Î -> ID/EXÁ÷Ë®¼Ä´æÆ÷
-    wire [4:0]  id_rs1, id_rs2, id_rd;      // ¼Ä´æÆ÷±àºÅ
-    wire [31:0] id_rs1_val, id_rs2_val;     // ¼Ä´æÆ÷¶Ñ¶Á³öµÄÔ´²Ù×÷ÊıÖµ
-    wire [31:0] id_imm;                    // Á¢¼´ÊıÀ©Õ¹
+    // IFé˜¶æ®µ -> IF/IDæµæ°´å¯„å­˜å™¨
+    wire [31:0] if_pc_next;      // è®¡ç®—å‡ºçš„ä¸‹ä¸€æ¡PCåœ°å€
+    wire [31:0] if_instr;        // å–å‡ºçš„æŒ‡ä»¤
+    wire [31:0] if_pc_curr;      // å½“å‰PCå€¼ï¼ˆç”¨äºè¾“å‡º/è°ƒè¯•ï¼‰
+    // IF/ID -> IDé˜¶æ®µ
+    reg  [31:0] if_id_instr;     // IF/ID å¯„å­˜çš„æŒ‡ä»¤
+    reg  [31:0] if_id_pc;        // IF/ID å¯„å­˜çš„å½“å‰æŒ‡ä»¤PC
+    // IDé˜¶æ®µ -> ID/EXæµæ°´å¯„å­˜å™¨
+    wire [4:0]  id_rs1, id_rs2, id_rd;      // å¯„å­˜å™¨ç¼–å·
+    wire [31:0] id_rs1_val, id_rs2_val;     // å¯„å­˜å™¨å †è¯»å‡ºçš„æºæ“ä½œæ•°å€¼
+    wire [31:0] id_imm;                    // ç«‹å³æ•°æ‰©å±•
     wire        id_reg_write, id_mem_read, id_mem_write;
-    wire [2:0]  id_mem_op;                 // ´æ´¢Æ÷²Ù×÷ÀàĞÍ£¨ÀıÈçÇø·Ö×Ö½Ú/°ë×Ö/×Ö£¬¼°ÓĞ·ûºÅ/ÎŞ·ûºÅ£©
-    wire        id_branch;      //ÊÇ·ñÎª·ÖÖ§
-    wire [1:0]  id_jump;        // ÊÇ·ñÎªÎŞÌõ¼şÌø×ª
-    wire [3:0]  id_alu_op;                 // ALU ²Ù×÷Âë¿ØÖÆ£¨×Ô¶¨Òå£©
-    wire        id_alu_src1_pc;            // ALU²Ù×÷ÊıAÑ¡Ôñ£º1±íÊ¾Ê¹ÓÃµ±Ç°PC£¬0±íÊ¾Ê¹ÓÃ¼Ä´æÆ÷rs1Öµ
-    wire        id_alu_src2_imm;           // ALU²Ù×÷ÊıBÑ¡Ôñ£º1±íÊ¾Ê¹ÓÃÁ¢¼´Êı£¬0±íÊ¾Ê¹ÓÃ¼Ä´æÆ÷rs2Öµ
-    // Ã°ÏÕ¼ì²âµ¥ÔªÊä³ö
-    wire        hazard_stall;   // Á÷Ë®ÏßÔİÍ££¨²åÈëµÈ´ıÖÜÆÚ£©
-    wire        hazard_flush;   // EX½×¶Î²åÈëÆøÅİ£¨½«ID/EXÇå³ıÎªNOP£©
-    // µ÷ÊÔÏÔÊ¾Ïà¹Ø
+    wire [2:0]  id_mem_op;                 // å­˜å‚¨å™¨æ“ä½œç±»å‹ï¼ˆä¾‹å¦‚åŒºåˆ†å­—èŠ‚/åŠå­—/å­—ï¼ŒåŠæœ‰ç¬¦å·/æ— ç¬¦å·ï¼‰
+    wire        id_branch;      //æ˜¯å¦ä¸ºåˆ†æ”¯
+    wire [1:0]  id_jump;        // æ˜¯å¦ä¸ºæ— æ¡ä»¶è·³è½¬
+    wire [3:0]  id_alu_op;                 // ALU æ“ä½œç æ§åˆ¶ï¼ˆè‡ªå®šä¹‰ï¼‰
+    wire        id_alu_src1_pc;            // ALUæ“ä½œæ•°Aé€‰æ‹©ï¼š1è¡¨ç¤ºä½¿ç”¨å½“å‰PCï¼Œ0è¡¨ç¤ºä½¿ç”¨å¯„å­˜å™¨rs1å€¼
+    wire        id_alu_src2_imm;           // ALUæ“ä½œæ•°Bé€‰æ‹©ï¼š1è¡¨ç¤ºä½¿ç”¨ç«‹å³æ•°ï¼Œ0è¡¨ç¤ºä½¿ç”¨å¯„å­˜å™¨rs2å€¼
+    // å†’é™©æ£€æµ‹å•å…ƒè¾“å‡º
+    wire        hazard_stall;   // æµæ°´çº¿æš‚åœï¼ˆæ’å…¥ç­‰å¾…å‘¨æœŸï¼‰
+    wire        hazard_flush;   // EXé˜¶æ®µæ’å…¥æ°”æ³¡ï¼ˆå°†ID/EXæ¸…é™¤ä¸ºNOPï¼‰
+    // è°ƒè¯•æ˜¾ç¤ºç›¸å…³
     reg  [4:0]  dbg_reg_idx;
     wire [31:0] dbg_reg_val;
-    // ID/EX -> EX½×¶Î
+    // ID/EX -> EXé˜¶æ®µ
     reg [31:0] id_ex_pc;
     reg [31:0] id_ex_rs1_val;
     reg [31:0] id_ex_rs2_val;
@@ -65,12 +65,12 @@ module cpu_top(
     reg [3:0]  id_ex_alu_op;
     reg        id_ex_alu_src1_pc;
     reg        id_ex_alu_src2_imm;
-    // EX½×¶Î -> EX/MEMÁ÷Ë®¼Ä´æÆ÷
-    wire [31:0] ex_alu_result;   // ALU¼ÆËã½á¹û
-    wire        ex_branch_taken; // ·ÖÖ§¾ö¶¨ĞÅºÅ£¬¸ß±íÊ¾Ìø×ª³ÉÁ¢
-    wire [31:0] ex_branch_target;// ¼ÆËã³öµÄ·ÖÖ§/Ìø×ªÄ¿±êµØÖ·
-    wire [31:0] ex_forwarded_rs2;// £¨Õë¶Ôstore£©Ç°µİºóµÄrs2Öµ£¬ÓÃÓÚ´æ´¢Ğ´
-    // EX/MEM -> MEM½×¶Î
+    // EXé˜¶æ®µ -> EX/MEMæµæ°´å¯„å­˜å™¨
+    wire [31:0] ex_alu_result;   // ALUè®¡ç®—ç»“æœ
+    wire        ex_branch_taken; // åˆ†æ”¯å†³å®šä¿¡å·ï¼Œé«˜è¡¨ç¤ºè·³è½¬æˆç«‹
+    wire [31:0] ex_branch_target;// è®¡ç®—å‡ºçš„åˆ†æ”¯/è·³è½¬ç›®æ ‡åœ°å€
+    wire [31:0] ex_forwarded_rs2;// ï¼ˆé’ˆå¯¹storeï¼‰å‰é€’åçš„rs2å€¼ï¼Œç”¨äºå­˜å‚¨å†™
+    // EX/MEM -> MEMé˜¶æ®µ
     reg [31:0] ex_mem_alu_result;
     reg [31:0] ex_mem_store_val;
     reg [4:0]  ex_mem_rd;
@@ -78,70 +78,70 @@ module cpu_top(
     reg        ex_mem_mem_read;
     reg        ex_mem_mem_write;
     reg [2:0]  ex_mem_mem_op;
-    // MEM½×¶Î -> MEM/WBÁ÷Ë®¼Ä´æÆ÷
-    wire [31:0] mem_data_out;   // ´ÓÊı¾İ´æ´¢Æ÷¶ÁÈ¡µÄÊı¾İ£¨¾­À©Õ¹Îª32Î»£©
-    wire [31:0] mem_wb_value;   // ½«ÒªĞ´»Ø¼Ä´æÆ÷µÄÖµ£¨À´×ÔALU»òmem_data_outµÄÑ¡Ôñ£©
-    // MEM/WB -> WB½×¶Î
+    // MEMé˜¶æ®µ -> MEM/WBæµæ°´å¯„å­˜å™¨
+    wire [31:0] mem_data_out;   // ä»æ•°æ®å­˜å‚¨å™¨è¯»å–çš„æ•°æ®ï¼ˆç»æ‰©å±•ä¸º32ä½ï¼‰
+    wire [31:0] mem_wb_value;   // å°†è¦å†™å›å¯„å­˜å™¨çš„å€¼ï¼ˆæ¥è‡ªALUæˆ–mem_data_outçš„é€‰æ‹©ï¼‰
+    // MEM/WB -> WBé˜¶æ®µ
     reg [31:0] mem_wb_value_r;
     reg [4:0]  mem_wb_rd;
     reg        mem_wb_reg_write;
-    //wire       is_BRANCH;//new add,ÊÇ·ñÊÇ·ÖÖ§Àà
-    //assign is_BRANCH=id_jump[0]|id_jump[1]|id_branch|id_ex_jump[0]|id_ex_jump[1]|id_ex_branch;//ÉÏÌõºÍÉÏÉÏÌõÊÇ·ñÎª·ÖÖ§Ö¸Áî
+    //wire       is_BRANCH;//new add,æ˜¯å¦æ˜¯åˆ†æ”¯ç±»
+    //assign is_BRANCH=id_jump[0]|id_jump[1]|id_branch|id_ex_jump[0]|id_ex_jump[1]|id_ex_branch;//ä¸Šæ¡å’Œä¸Šä¸Šæ¡æ˜¯å¦ä¸ºåˆ†æ”¯æŒ‡ä»¤
 
 
-    // ÊµÀı»¯¸÷½×¶ÎºÍÄ£¿é
+    // å®ä¾‹åŒ–å„é˜¶æ®µå’Œæ¨¡å—
     
-    // È¡Ö¸´æ´¢Æ÷ (Ö¸Áî´æ´¢Æ÷) - ²ÉÓÃÍ¬²½ROM, Í¨¹ı³õÊ¼»¯ÎÄ¼şÔ¤ÖÃÖ¸Áî
-    localparam IMEM_SIZE = 256;  // Ö¸Áî´æ´¢Æ÷´óĞ¡£¨×Ö£©
+    // å–æŒ‡å­˜å‚¨å™¨ (æŒ‡ä»¤å­˜å‚¨å™¨) - é‡‡ç”¨åŒæ­¥ROM, é€šè¿‡åˆå§‹åŒ–æ–‡ä»¶é¢„ç½®æŒ‡ä»¤
+    localparam IMEM_SIZE = 256;  // æŒ‡ä»¤å­˜å‚¨å™¨å¤§å°ï¼ˆå­—ï¼‰
     reg [31:0] inst_mem [0:IMEM_SIZE-1]; 
     initial begin
-        // Ê¹ÓÃÔ¤ÏÈÉú³ÉµÄ»úÆ÷ÂëÎÄ¼ş³õÊ¼»¯Ö¸Áî´æ´¢Æ÷
-        // ÀıÈç: $readmemh("progmem.hex", inst_mem);
-        // ÕâÀïÊ¡ÂÔ¾ßÌåÎÄ¼şÂ·¾¶£¬Ä¬ÈÏ¼ÙÉèÒÑ¾­Í¨¹ıCOE»òÆäËû·½Ê½³õÊ¼»¯
+        // ä½¿ç”¨é¢„å…ˆç”Ÿæˆçš„æœºå™¨ç æ–‡ä»¶åˆå§‹åŒ–æŒ‡ä»¤å­˜å‚¨å™¨
+        // ä¾‹å¦‚: $readmemh("progmem.hex", inst_mem);
+        // è¿™é‡Œçœç•¥å…·ä½“æ–‡ä»¶è·¯å¾„ï¼Œé»˜è®¤å‡è®¾å·²ç»é€šè¿‡COEæˆ–å…¶ä»–æ–¹å¼åˆå§‹åŒ–
         $readmemh("progmem.hex", inst_mem);
     end
     
-    // PC¼Ä´æÆ÷£ºÔÚÊ±ÖÓÉÏÉıÑØ¸üĞÂPC
+    // PCå¯„å­˜å™¨ï¼šåœ¨æ—¶é’Ÿä¸Šå‡æ²¿æ›´æ–°PC
     reg [31:0] pc;
     always @(posedge clk_cpu or posedge reset) begin
         if (reset) begin
-            pc <= 32'h0000_0000;  // ¸´Î»Ê±PC´Ó0µØÖ·¿ªÊ¼
+            pc <= 32'h0000_0000;  // å¤ä½æ—¶PCä»0åœ°å€å¼€å§‹
         end else begin
             if (!hazard_stall && !debug_pause) begin
-                // ·ÇÔİÍ£Ê±¸üĞÂPC£ºÓÅÏÈ·ÖÖ§/Ìø×ªÄ¿±ê£¬·ñÔòPC+4
+                // éæš‚åœæ—¶æ›´æ–°PCï¼šä¼˜å…ˆåˆ†æ”¯/è·³è½¬ç›®æ ‡ï¼Œå¦åˆ™PC+4
                 pc <= ex_branch_taken ? ex_branch_target : pc + 32'd4;
             end else begin
-                pc <= pc; // ÔİÍ£Ê±±£³ÖPC²»±ä
+                pc <= pc; // æš‚åœæ—¶ä¿æŒPCä¸å˜
             end
         end
     end
     
-    // IF½×¶ÎÈ¡Ö¸£º×éºÏÂß¼­´ÓÖ¸Áî´æ´¢Æ÷¶ÁÈ¡µ±Ç°PCµØÖ·µÄÖ¸Áî
+    // IFé˜¶æ®µå–æŒ‡ï¼šç»„åˆé€»è¾‘ä»æŒ‡ä»¤å­˜å‚¨å™¨è¯»å–å½“å‰PCåœ°å€çš„æŒ‡ä»¤
     assign if_instr = inst_mem[pc[31:2]]; 
-    assign if_pc_curr = pc/4;  // µ±Ç°µÚ¼¸ÌõÖ¸Áî£¨ÓÃÓÚµ÷ÊÔÏÔÊ¾£©
+    assign if_pc_curr = pc/4;  // å½“å‰ç¬¬å‡ æ¡æŒ‡ä»¤ï¼ˆç”¨äºè°ƒè¯•æ˜¾ç¤ºï¼‰
     
-    // ÓÉÓÚÖ¸Áî´æ´¢Æ÷°´×ÖÑ°Ö·£¬ÕâÀï¼ÙÉèpc°´×Ö¶ÔÆë£¬Ê¹ÓÃpc[31:2]×öË÷Òı
-    // Vivado×ÛºÏÊ±»á½«´ËÍÆ¶ÏÎª¿éRAM ROM
+    // ç”±äºæŒ‡ä»¤å­˜å‚¨å™¨æŒ‰å­—å¯»å€ï¼Œè¿™é‡Œå‡è®¾pcæŒ‰å­—å¯¹é½ï¼Œä½¿ç”¨pc[31:2]åšç´¢å¼•
+    // Vivadoç»¼åˆæ—¶ä¼šå°†æ­¤æ¨æ–­ä¸ºå—RAM ROM
     
-    // IF -> IF/ID Á÷Ë®¼Ä´æÆ÷¸üĞÂ
+    // IF -> IF/ID æµæ°´å¯„å­˜å™¨æ›´æ–°
     always @(posedge clk_cpu or posedge reset) begin
         if (reset) begin
             if_id_instr <= 32'b0;
             if_id_pc    <= 32'b0;
         end else begin
             if (!hazard_stall && !debug_pause) begin
-                if_id_instr <= (ex_branch_taken ? 32'h0000_0013: if_instr); // NOPÖ¸Áî±àÂë 
-                // Èô·¢ÉúÌø×ª£¬Ôò°ÑÈ¡µ½µÄ´íÎóÖ¸ÁîÇå³ıÎª0£¨NOP£©£¬ÊµÏÖflush IF/ID
+                if_id_instr <= (ex_branch_taken ? 32'h0000_0013: if_instr); // NOPæŒ‡ä»¤ç¼–ç  
+                // è‹¥å‘ç”Ÿè·³è½¬ï¼Œåˆ™æŠŠå–åˆ°çš„é”™è¯¯æŒ‡ä»¤æ¸…é™¤ä¸º0ï¼ˆNOPï¼‰ï¼Œå®ç°flush IF/ID
                 if_id_pc    <= (ex_branch_taken ? 32'b0 : pc);
             end else begin
-                // hazard_stallÊ±£¬±£³ÖIF/ID²»±ä£¨Í£¶Ù£©
+                // hazard_stallæ—¶ï¼Œä¿æŒIF/IDä¸å˜ï¼ˆåœé¡¿ï¼‰
                 if_id_instr <= if_id_instr;
                 if_id_pc    <= if_id_pc;
             end
         end
     end
     
-    // ÊµÀı»¯Ö¸ÁîÒëÂë/¿ØÖÆµ¥ÔªºÍ¼Ä´æÆ÷¶Ñ (ID½×¶Î)
+    // å®ä¾‹åŒ–æŒ‡ä»¤è¯‘ç /æ§åˆ¶å•å…ƒå’Œå¯„å­˜å™¨å † (IDé˜¶æ®µ)
     id_stage id_stage_u (
         .instr       (if_id_instr),
         .pc          (if_id_pc),
@@ -162,13 +162,13 @@ module cpu_top(
         .rs2_val     (id_rs2_val),
         .clk         (clk_cpu),
         .reset       (reset),
-        // Ã°ÏÕµ¥ÔªĞÅºÅ
+        // å†’é™©å•å…ƒä¿¡å·
         .hazard_stall(hazard_stall),
         .dbg_reg_idx (dbg_reg_idx),
         .dbg_reg_val (dbg_reg_val)
     );
     
-    // Ã°ÏÕ¼ì²âµ¥Ôª£º¼ì²âload-useĞÍÊı¾İÃ°ÏÕ
+    // å†’é™©æ£€æµ‹å•å…ƒï¼šæ£€æµ‹load-useå‹æ•°æ®å†’é™©
     hazard_unit hazard_u (
         .id_ex_mem_read (id_ex_mem_read),
         .id_ex_rd       (id_ex_rd),
@@ -178,10 +178,10 @@ module cpu_top(
         .hazard_flush   (hazard_flush)
     );
     
-    // ID -> ID/EX Á÷Ë®¼Ä´æÆ÷
+    // ID -> ID/EX æµæ°´å¯„å­˜å™¨
     always @(posedge clk_cpu or posedge reset) begin
         if (reset) begin
-            // Çå³ı ID/EX
+            // æ¸…é™¤ ID/EX
             id_ex_pc         <= 32'b0;
             id_ex_rs1_val    <= 32'b0;
             id_ex_rs2_val    <= 32'b0;
@@ -200,7 +200,7 @@ module cpu_top(
             id_ex_alu_src2_imm<=1'b0;
         end else begin
             if (hazard_flush||ex_branch_taken) begin
-                // ²åÈëÆøÅİ£º½«ID/EXÇåÁã£¨ÊÓ×÷ NOP Ö¸Áî£©
+                // æ’å…¥æ°”æ³¡ï¼šå°†ID/EXæ¸…é›¶ï¼ˆè§†ä½œ NOP æŒ‡ä»¤ï¼‰
                 id_ex_pc         <= 32'b0;
                 id_ex_rs1_val    <= 32'b0;
                 id_ex_rs2_val    <= 32'b0;
@@ -218,7 +218,7 @@ module cpu_top(
                 id_ex_alu_src1_pc<= 1'b0;
                 id_ex_alu_src2_imm<=1'b0;
             end else if (!hazard_stall && !debug_pause) begin
-                // Õı³£´«µİÒëÂë½á¹û½øÈëEX½×¶Î
+                // æ­£å¸¸ä¼ é€’è¯‘ç ç»“æœè¿›å…¥EXé˜¶æ®µ
                 id_ex_pc         <= if_id_pc;
                 id_ex_rs1_val    <= id_rs1_val;
                 id_ex_rs2_val    <= id_rs2_val;
@@ -236,11 +236,11 @@ module cpu_top(
                 id_ex_alu_src1_pc<= id_alu_src1_pc;
                 id_ex_alu_src2_imm<=id_alu_src2_imm;
             end
-            // Èô hazard_stall=1 ÇÒ hazard_flush=0£¬Ôò±£³ÖÉÏÖÜÆÚÖµ²»±ä£¨²»»á·¢Éú£¬¸ÃÇé¿öÒÑÔÚÉÏÃæstall¿ØÖÆIF/ID£©
+            // è‹¥ hazard_stall=1 ä¸” hazard_flush=0ï¼Œåˆ™ä¿æŒä¸Šå‘¨æœŸå€¼ä¸å˜ï¼ˆä¸ä¼šå‘ç”Ÿï¼Œè¯¥æƒ…å†µå·²åœ¨ä¸Šé¢stallæ§åˆ¶IF/IDï¼‰
         end
     end
     
-    // Ö´ĞĞ½×¶ÎÄ£¿é£º°üº¬ALU¡¢×ª·¢ºÍ·ÖÖ§ÅĞ¶Ï
+    // æ‰§è¡Œé˜¶æ®µæ¨¡å—ï¼šåŒ…å«ALUã€è½¬å‘å’Œåˆ†æ”¯åˆ¤æ–­
     ex_stage ex_stage_u (
         .pc           (id_ex_pc),
         .rs1_val      (id_ex_rs1_val),
@@ -258,14 +258,14 @@ module cpu_top(
         .alu_op       (id_ex_alu_op),
         .alu_src1_pc  (id_ex_alu_src1_pc),
         .alu_src2_imm (id_ex_alu_src2_imm),
-        // À´×ÔºóĞøÁ÷Ë®¶ÎÓÃÓÚÇ°µİµÄĞÅºÅ
+        // æ¥è‡ªåç»­æµæ°´æ®µç”¨äºå‰é€’çš„ä¿¡å·
         .ex_mem_rd    (ex_mem_rd),
         .ex_mem_reg_write(ex_mem_reg_write),
         .ex_mem_alu_result(ex_mem_alu_result),
         .mem_wb_rd    (mem_wb_rd),
         .mem_wb_reg_write(mem_wb_reg_write),
         .mem_wb_value (mem_wb_value_r),
-        // Êä³ö
+        // è¾“å‡º
         .alu_result   (ex_alu_result),
         .forwarded_rs2(ex_forwarded_rs2),
         .branch_taken (ex_branch_taken),
@@ -276,10 +276,10 @@ module cpu_top(
         .mem_write_out(/* not used here */),
         .mem_op_out   (/* not used here */)
     );
-    // ×¢Òâ£ºex_stageÄ£¿éÄÚ²¿Í¬Ê±²úÉú¼Ä´æÆ÷Ğ´»Ø¡¢·Ã´æµÈĞÅºÅ£¬±¾ÀıÖĞÖ±½ÓÍ¨¹ıid_exĞÅºÅ´«µİ
-    // Îª¼ò»¯£¬ex_stageÊä³öµÄ¿ØÖÆĞÅºÅ¿ÉÒÔ²»ÖØ¸´Á¬³ö£¬Ö±½ÓÊ¹ÓÃid_ex½×¶ÎµÄ¶ÔÓ¦ĞÅºÅ½øÈëEX/MEM¼Ä´æÆ÷
+    // æ³¨æ„ï¼šex_stageæ¨¡å—å†…éƒ¨åŒæ—¶äº§ç”Ÿå¯„å­˜å™¨å†™å›ã€è®¿å­˜ç­‰ä¿¡å·ï¼Œæœ¬ä¾‹ä¸­ç›´æ¥é€šè¿‡id_exä¿¡å·ä¼ é€’
+    // ä¸ºç®€åŒ–ï¼Œex_stageè¾“å‡ºçš„æ§åˆ¶ä¿¡å·å¯ä»¥ä¸é‡å¤è¿å‡ºï¼Œç›´æ¥ä½¿ç”¨id_exé˜¶æ®µçš„å¯¹åº”ä¿¡å·è¿›å…¥EX/MEMå¯„å­˜å™¨
     
-    // EX -> EX/MEM Á÷Ë®¼Ä´æÆ÷
+    // EX -> EX/MEM æµæ°´å¯„å­˜å™¨
     always @(posedge clk_cpu or posedge reset) begin
         if (reset) begin
             ex_mem_alu_result <= 32'b0;
@@ -291,7 +291,7 @@ module cpu_top(
             ex_mem_mem_op     <= 3'b0;
         end else if (!debug_pause) begin
             ex_mem_alu_result <= ex_alu_result;
-            ex_mem_store_val  <= ex_forwarded_rs2;  // StoreÖ¸ÁîĞèÒªĞ´ÈëÄÚ´æµÄÊı¾İ£¨ÒÑ¾­¹ıÇ°µİĞŞÕı£©
+            ex_mem_store_val  <= ex_forwarded_rs2;  // StoreæŒ‡ä»¤éœ€è¦å†™å…¥å†…å­˜çš„æ•°æ®ï¼ˆå·²ç»è¿‡å‰é€’ä¿®æ­£ï¼‰
             ex_mem_rd         <= id_ex_rd;
             ex_mem_reg_write  <= id_ex_reg_write;
             ex_mem_mem_read   <= id_ex_mem_read;
@@ -300,7 +300,7 @@ module cpu_top(
         end
     end
     
-    // ·Ã´æ½×¶ÎÄ£¿é£º°üº¬Êı¾İ´æ´¢Æ÷ºÍ¼ÓÔØ/´æ´¢µÄÊı¾İ´¦Àí
+    // è®¿å­˜é˜¶æ®µæ¨¡å—ï¼šåŒ…å«æ•°æ®å­˜å‚¨å™¨å’ŒåŠ è½½/å­˜å‚¨çš„æ•°æ®å¤„ç†
     mem_stage mem_stage_u (
         .alu_result   (ex_mem_alu_result),
         .store_val    (ex_mem_store_val),
@@ -310,14 +310,14 @@ module cpu_top(
         .clk          (clk_cpu),
         .reset        (reset),
         .data_out     (mem_data_out)
-        // Êı¾İ´æ´¢Æ÷ÒıÓÃ£¨¼òµ¥ÊµÏÖÎªÄÚ²¿reg£¬Ò²¿ÉÌæ»»ÎªBlock RAM£©
-        //.dmem         ()  // ´Ë´¦½«ÔÚÄ£¿éÄÚ²¿¶¨ÒådmemÊı×é
+        // æ•°æ®å­˜å‚¨å™¨å¼•ç”¨ï¼ˆç®€å•å®ç°ä¸ºå†…éƒ¨regï¼Œä¹Ÿå¯æ›¿æ¢ä¸ºBlock RAMï¼‰
+        //.dmem         ()  // æ­¤å¤„å°†åœ¨æ¨¡å—å†…éƒ¨å®šä¹‰dmemæ•°ç»„
     );
     
-    // ½«ALU½á¹û»òÄÚ´æ¶ÁÈ¡Êı¾İÑ¡ÔñÎªĞ´»ØÖµ
+    // å°†ALUç»“æœæˆ–å†…å­˜è¯»å–æ•°æ®é€‰æ‹©ä¸ºå†™å›å€¼
     assign mem_wb_value = ex_mem_mem_read ? mem_data_out : ex_mem_alu_result;
     
-    // MEM -> MEM/WB Á÷Ë®¼Ä´æÆ÷
+    // MEM -> MEM/WB æµæ°´å¯„å­˜å™¨
     always @(posedge clk_cpu or posedge reset) begin
         if (reset) begin
             mem_wb_value_r   <= 32'b0;
@@ -330,22 +330,22 @@ module cpu_top(
         end
     end
     
-    // Ğ´»Ø½×¶Î£º¼Ä´æÆ÷¶ÑĞ´Èë£¨Í¬²½Ğ´ÔÚÊ±ÖÓÉÏÉıÑØ½øĞĞ£©
-    // ÒÑÔÚid_stageÄ£¿éÖĞµÄ¼Ä´æÆ÷¶ÑÊµÀıÖĞ£¬Í¨¹ıÔÚWB½×¶ÎĞ´»Ø
-    // ÔÚcpu_top¶¥²ãÍ¨¹ıÓëid_stageÁ¬½ÓÊµÏÖĞ´»Ø
+    // å†™å›é˜¶æ®µï¼šå¯„å­˜å™¨å †å†™å…¥ï¼ˆåŒæ­¥å†™åœ¨æ—¶é’Ÿä¸Šå‡æ²¿è¿›è¡Œï¼‰
+    // å·²åœ¨id_stageæ¨¡å—ä¸­çš„å¯„å­˜å™¨å †å®ä¾‹ä¸­ï¼Œé€šè¿‡åœ¨WBé˜¶æ®µå†™å›
+    // åœ¨cpu_topé¡¶å±‚é€šè¿‡ä¸id_stageè¿æ¥å®ç°å†™å›
     
-    // ½«Ğ´»ØĞÅºÅ´«µİ¸ø¼Ä´æÆ÷¶ÑÄ£¿é (id_stage°üº¬¼Ä´æÆ÷¶Ñ)
+    // å°†å†™å›ä¿¡å·ä¼ é€’ç»™å¯„å­˜å™¨å †æ¨¡å— (id_stageåŒ…å«å¯„å­˜å™¨å †)
     assign id_stage_u.wb_rd_idx   = mem_wb_rd;
     assign id_stage_u.wb_data_in  = mem_wb_value_r;
     assign id_stage_u.wb_reg_write= mem_wb_reg_write;
     
     // -------------------------------
-    // °åÉÏÊä³ö£ºLEDºÍÊıÂë¹Üµ÷ÊÔÏÔÊ¾
+    // æ¿ä¸Šè¾“å‡ºï¼šLEDå’Œæ•°ç ç®¡è°ƒè¯•æ˜¾ç¤º
     // -------------------------------
-    // LEDÏÔÊ¾Ê¾Àı£ºÖ±½ÓÏÔÊ¾x3¼Ä´æÆ÷µÍ16Î»
+    // LEDæ˜¾ç¤ºç¤ºä¾‹ï¼šç›´æ¥æ˜¾ç¤ºx3å¯„å­˜å™¨ä½16ä½
     assign led_o = id_stage_u.regs[3][15:0];
 
-    // µ÷ÊÔ¼Ä´æÆ÷Ë÷ÒıÑ­»·
+    // è°ƒè¯•å¯„å­˜å™¨ç´¢å¼•å¾ªç¯
     reg [31:0] disp_cnt;
     always @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -366,7 +366,7 @@ module cpu_top(
         end
     end
 
-    // PCºÍ¼Ä´æÆ÷ÖµÊı×Ö×¼±¸
+    // PCå’Œå¯„å­˜å™¨å€¼æ•°å­—å‡†å¤‡
     wire [3:0] pc_d0 = if_pc_curr[3:0];
     wire [3:0] pc_d1 = if_pc_curr[7:4];
     wire [3:0] pc_d2 = if_pc_curr[11:8];
@@ -394,7 +394,7 @@ module cpu_top(
         end
     end
 
-    // ÊıÂë¹ÜÉ¨ÃèÇı¶¯
+    // æ•°ç ç®¡æ‰«æé©±åŠ¨
     seven_seg_driver disp_u(
         .clk   (clk),
         .reset (reset),
