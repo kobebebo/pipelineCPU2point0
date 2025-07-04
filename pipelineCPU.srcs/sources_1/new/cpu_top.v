@@ -1,20 +1,18 @@
 `timescale 1ns / 1ps
-// 顶层模块：五级流水线CPU (RV32I) - Xilinx Artix-7 FPGA
 module cpu_top(
-    input  wire        clk,      // 时钟输入（FPGA板外100MHz时钟）:contentReference[oaicite:15]{index=15}
-    input  wire        rstn,     // 复位输入（低电平有效）:contentReference[oaicite:16]{index=16}
-    input  wire [15:0] sw_i,     // 板上开关输入（用于调试/控制）:contentReference[oaicite:17]{index=17}
-    output wire [15:0] led_o,    // 板上LED输出（用于指示状态）:contentReference[oaicite:18]{index=18}
-    output wire [7:0]  disp_seg_o, // 数码管段选信号（共8段，包括小数点）:contentReference[oaicite:19]{index=19}
-    output wire [7:0]  disp_an_o   // 数码管位选信号（8位数码管）:contentReference[oaicite:20]{index=20}
+    input  wire        clk,    
+    input  wire        rstn,   
+    input  wire [15:0] sw_i,    
+    output wire [15:0] led_o,   
+    output wire [7:0]  disp_seg_o, 
+    output wire [7:0]  disp_an_o  
 );
 
-    // 时钟与复位信号
     wire reset = ~rstn;  // 将低有效复位转换为高有效的reset信号
 
     // 调试/控制信号
-    wire debug_pause   = sw_i[13];      // =1暂停CPU运行
-    wire display_regs  = sw_i[14];     // =1显示寄存器
+    wire debug_pause   = sw_i[5];      // =1暂停CPU运行
+    wire display_regs  = sw_i[10];     // =1显示寄存器
     wire fast_clk_sel  = sw_i[15];     // =1使用原始时钟
 
     // 时钟分频：当sw_i[15]=0时使用慢速时钟，便于观察
@@ -86,7 +84,8 @@ module cpu_top(
     reg [31:0] mem_wb_value_r;
     reg [4:0]  mem_wb_rd;
     reg        mem_wb_reg_write;
-    
+    //wire       is_BRANCH;//new add,是否是分支类
+    //assign is_BRANCH=id_jump[0]|id_jump[1]|id_branch|id_ex_jump[0]|id_ex_jump[1]|id_ex_branch;//上条和上上条是否为分支指令
     // -------------------------------
     // 实例化各阶段和模块
     // -------------------------------
@@ -199,7 +198,7 @@ module cpu_top(
             id_ex_alu_src1_pc<= 1'b0;
             id_ex_alu_src2_imm<=1'b0;
         end else begin
-            if (hazard_flush ) begin
+            if (hazard_flush) begin
                 // 插入气泡：将ID/EX清零（视作 NOP 指令）
                 id_ex_pc         <= 32'b0;
                 id_ex_rs1_val    <= 32'b0;

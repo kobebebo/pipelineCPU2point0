@@ -93,15 +93,11 @@ module ex_stage(
             4'b1010: alu_result = op_b;                   // PASSB (直接输出第二操作数，用于LUI)
             default: alu_result = op_a + op_b;
         endcase
-        // 计算零标志用于分支判断
-        
+        // 计算零标志用于分支判断   
         zero_flag = (alu_result == 32'b0);
-    //end
-    
-    
-    
+
     // 分支与跳转判定
-    //always @(*) begin
+
         branch_taken = 1'b0;
         branch_target = 32'b0;
         if (branch_in) begin
