@@ -24,9 +24,10 @@ module cpu_top(
     );
     wire clk_cpu = fast_clk_sel ? clk : slow_clk;
     
-    // -------------------------------
+
     // 信号定义：流水线各阶段之间的连线
-    // -------------------------------
+    
+    
     // IF阶段 -> IF/ID流水寄存器
     wire [31:0] if_pc_next;      // 计算出的下一条PC地址
     wire [31:0] if_instr;        // 取出的指令
@@ -86,12 +87,12 @@ module cpu_top(
     reg        mem_wb_reg_write;
     //wire       is_BRANCH;//new add,是否是分支类
     //assign is_BRANCH=id_jump[0]|id_jump[1]|id_branch|id_ex_jump[0]|id_ex_jump[1]|id_ex_branch;//上条和上上条是否为分支指令
-    // -------------------------------
+
+
     // 实例化各阶段和模块
-    // -------------------------------
     
     // 取指存储器 (指令存储器) - 采用同步ROM, 通过初始化文件预置指令
-    localparam IMEM_SIZE = 256;  // 指令存储器大小（字数），可根据需要调整
+    localparam IMEM_SIZE = 256;  // 指令存储器大小（字）
     reg [31:0] inst_mem [0:IMEM_SIZE-1]; 
     initial begin
         // 使用预先生成的机器码文件初始化指令存储器
@@ -117,10 +118,10 @@ module cpu_top(
     
     // IF阶段取指：组合逻辑从指令存储器读取当前PC地址的指令
     assign if_instr = inst_mem[pc[31:2]]; 
-    assign if_pc_curr = pc/4;  // 当前PC值输出（用于调试显示）
+    assign if_pc_curr = pc/4;  // 当前第几条指令（用于调试显示）
     
     // 由于指令存储器按字寻址，这里假设pc按字对齐，使用pc[31:2]做索引
-    // Vivado综合时会将此推断为块RAM ROM。
+    // Vivado综合时会将此推断为块RAM ROM
     
     // IF -> IF/ID 流水寄存器更新
     always @(posedge clk_cpu or posedge reset) begin
@@ -129,7 +130,7 @@ module cpu_top(
             if_id_pc    <= 32'b0;
         end else begin
             if (!hazard_stall && !debug_pause) begin
-                if_id_instr <= (ex_branch_taken ? 32'b0 : if_instr);
+                if_id_instr <= (ex_branch_taken ? 32'h0000_0013: if_instr); // NOP指令编码 
                 // 若发生跳转，则把取到的错误指令清除为0（NOP），实现flush IF/ID
                 if_id_pc    <= (ex_branch_taken ? 32'b0 : pc);
             end else begin
@@ -198,7 +199,7 @@ module cpu_top(
             id_ex_alu_src1_pc<= 1'b0;
             id_ex_alu_src2_imm<=1'b0;
         end else begin
-            if (hazard_flush) begin
+            if (hazard_flush||ex_branch_taken) begin
                 // 插入气泡：将ID/EX清零（视作 NOP 指令）
                 id_ex_pc         <= 32'b0;
                 id_ex_rs1_val    <= 32'b0;

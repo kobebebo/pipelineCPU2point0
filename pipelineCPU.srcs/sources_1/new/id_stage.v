@@ -49,7 +49,6 @@ module id_stage(
             for (i=0; i<32; i=i+1) begin
                 regs[i] <= 32'b0;
             end
-            //regs[2] <= 32'd128;  // 初始化x2 (sp) = 128:contentReference[oaicite:26]{index=26}
         end else begin
             // 写回阶段 - 在时钟上升沿写寄存器
             if (wb_reg_write && wb_rd_idx != 5'd0) begin
@@ -58,7 +57,7 @@ module id_stage(
             //dbg_reg_val <= regs[dbg_reg_idx];
         end
     end
-    
+   
     // 控制信号默认值（每个周期组合逻辑计算）
     always @(*) begin
         // 默认值（大多数信号默认为0，在匹配指令时设置为1）
