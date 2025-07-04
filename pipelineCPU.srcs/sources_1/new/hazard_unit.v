@@ -1,19 +1,19 @@
 `timescale 1ns / 1ps
 module hazard_unit(
-    input wire        id_ex_mem_read,  // ID/EX½×¶ÎÖ¸ÁîÊÇ·ñÎªMemRead (Load)
-    input wire [4:0]  id_ex_rd,        // ID/EX½×¶ÎÖ¸ÁîµÄÄ¿±ê¼Ä´æÆ÷ºÅ
-    input wire [4:0]  if_id_rs1,       // IF/ID½×¶ÎÖ¸ÁîµÄÔ´¼Ä´æÆ÷1ºÅ
-    input wire [4:0]  if_id_rs2,       // IF/ID½×¶ÎÖ¸ÁîµÄÔ´¼Ä´æÆ÷2ºÅ
-    output reg        hazard_stall,    // Êä³ö£ºÁ÷Ë®ÏßÔİÍ£ĞÅºÅ
-    output reg        hazard_flush     // Êä³ö£º²åÈëÆøÅİĞÅºÅ£¨Çå³ıID/EX£©
+    input wire        id_ex_mem_read,  // ID/EXé˜¶æ®µæŒ‡ä»¤æ˜¯å¦ä¸ºMemRead (Load)
+    input wire [4:0]  id_ex_rd,        // ID/EXé˜¶æ®µæŒ‡ä»¤çš„ç›®æ ‡å¯„å­˜å™¨å·
+    input wire [4:0]  if_id_rs1,       // IF/IDé˜¶æ®µæŒ‡ä»¤çš„æºå¯„å­˜å™¨1å·
+    input wire [4:0]  if_id_rs2,       // IF/IDé˜¶æ®µæŒ‡ä»¤çš„æºå¯„å­˜å™¨2å·
+    output reg        hazard_stall,    // è¾“å‡ºï¼šæµæ°´çº¿æš‚åœä¿¡å·
+    output reg        hazard_flush     // è¾“å‡ºï¼šæ’å…¥æ°”æ³¡ä¿¡å·ï¼ˆæ¸…é™¤ID/EXï¼‰
 );
     always @(*) begin
-        // ³õÊ¼Ä¬ÈÏÎŞÃ°ÏÕ
+        // åˆå§‹é»˜è®¤æ— å†’é™©
         hazard_stall = 1'b0;
         hazard_flush = 1'b0;
-        // ¼ì²éload-useÃ°ÏÕÌõ¼ş
+        // æ£€æŸ¥load-useå†’é™©æ¡ä»¶
         if (id_ex_mem_read && 
-           ((id_ex_rd != 5'd0) &&  // Ç°ÌõÖ¸ÁîĞ´»Ø¼Ä´æÆ÷²»Ó¦ÊÇx0
+           ((id_ex_rd != 5'd0) &&  // å‰æ¡æŒ‡ä»¤å†™å›å¯„å­˜å™¨ä¸åº”æ˜¯x0
             ((id_ex_rd == if_id_rs1) || (id_ex_rd == if_id_rs2)))) begin
             hazard_stall = 1'b1;
             hazard_flush = 1'b1;

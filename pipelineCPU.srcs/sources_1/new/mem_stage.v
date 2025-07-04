@@ -1,27 +1,27 @@
 `timescale 1ns / 1ps
 module mem_stage(
-    input  wire [31:0] alu_result, // À´×ÔEX½×¶ÎµÄ¼ÆËãµØÖ·
-    input  wire [31:0] store_val,  // StoreÖ¸ÁîÒªĞ´ÈëµÄÊı¾İ
-    input  wire        mem_read,   // ·Ã´æ¶ÁÈ¡Ê¹ÄÜ
-    input  wire        mem_write,  // ·Ã´æĞ´ÈëÊ¹ÄÜ
-    input  wire [2:0]  mem_op,     // ´æ´¢²Ù×÷ÀàĞÍ(funct3)£¬Çø·Ö×Ö½Ú/°ë×Ö/×Ö¼°·ûºÅÀ©Õ¹
+    input  wire [31:0] alu_result, // æ¥è‡ªEXé˜¶æ®µçš„è®¡ç®—åœ°å€
+    input  wire [31:0] store_val,  // StoreæŒ‡ä»¤è¦å†™å…¥çš„æ•°æ®
+    input  wire        mem_read,   // è®¿å­˜è¯»å–ä½¿èƒ½
+    input  wire        mem_write,  // è®¿å­˜å†™å…¥ä½¿èƒ½
+    input  wire [2:0]  mem_op,     // å­˜å‚¨æ“ä½œç±»å‹(funct3)ï¼ŒåŒºåˆ†å­—èŠ‚/åŠå­—/å­—åŠç¬¦å·æ‰©å±•
     input  wire        clk,
     input  wire        reset,
-    output reg  [31:0] data_out    // ¶Á³öµÄÊı¾İ£¨À©Õ¹Îª32Î»£©
+    output reg  [31:0] data_out    // è¯»å‡ºçš„æ•°æ®ï¼ˆæ‰©å±•ä¸º32ä½ï¼‰
 );
-    // ¼òµ¥Êı¾İ´æ´¢Æ÷£º´óĞ¡Éè¶¨Îª256×Ö½Ú (64×Ö)
+    // ç®€å•æ•°æ®å­˜å‚¨å™¨ï¼šå¤§å°è®¾å®šä¸º256å­—èŠ‚ (64å­—)
     localparam DMEM_BYTES = 256;
     reg [7:0] dmem [0:DMEM_BYTES-1];
     
-    // ³õÊ¼»¯Êı¾İ´æ´¢Æ÷£¨¿ÉÑ¡£©£º¿ÉÓÃ $readmemh ÔØÈë³õÊ¼Êı¾İ
+    // åˆå§‹åŒ–æ•°æ®å­˜å‚¨å™¨ï¼ˆå¯é€‰ï¼‰ï¼šå¯ç”¨ $readmemh è½½å…¥åˆå§‹æ•°æ®
     initial begin
         $readmemh("datamem_init.hex", dmem);
     end
     
     wire [7:0] addr = alu_result[7:0];
-    // µØÖ·µÍ2Î»
+    // åœ°å€ä½2ä½
     wire [1:0] addr_offset = addr[1:0]; 
-    // ¼ÆËã×Ö¶ÔÆëµØÖ·µÄ»ùÖ·Ë÷Òı£¨×Ö½ÚÊı×éË÷Òı£©
+    // è®¡ç®—å­—å¯¹é½åœ°å€çš„åŸºå€ç´¢å¼•ï¼ˆå­—èŠ‚æ•°ç»„ç´¢å¼•ï¼‰
     wire [31:0] base_index = addr & 32'hFFFFFFFC;
     integer offset;
     reg [7:0] byte_val;reg [15:0] half_val;reg [31:0] word_val;//reg [7:0] byte_val;
@@ -29,25 +29,25 @@ module mem_stage(
         data_out = 32'b0;
         if (mem_read) begin
             case (mem_op)
-                3'b000: begin // LB: ¶Á1×Ö½Ú£¬ÓĞ·ûºÅÀ©Õ¹
+                3'b000: begin // LB: è¯»1å­—èŠ‚ï¼Œæœ‰ç¬¦å·æ‰©å±•
                     offset = addr_offset;
                     byte_val = dmem[addr];
                     data_out = {{24{byte_val[7]}}, byte_val};
                 end
-                3'b001: begin // LH: ¶Á2×Ö½Ú£¬ÓĞ·ûºÅÀ©Õ¹
-                    // ×éºÏÁ½¸ö×Ö½Ú£¬Ğ¡¶ËĞò
+                3'b001: begin // LH: è¯»2å­—èŠ‚ï¼Œæœ‰ç¬¦å·æ‰©å±•
+                    // ç»„åˆä¸¤ä¸ªå­—èŠ‚ï¼Œå°ç«¯åº
                     half_val = { dmem[addr + 1], dmem[addr] };
                     data_out = {{16{half_val[15]}}, half_val};
                 end
-                3'b010: begin // LW: ¶Á4×Ö½Ú
+                3'b010: begin // LW: è¯»4å­—èŠ‚
                     word_val = { dmem[addr+3], dmem[addr+2], dmem[addr+1], dmem[addr] };
                     data_out = word_val;
                 end
-                3'b100: begin // LBU: ¶Á1×Ö½Ú£¬ÁãÀ©Õ¹
+                3'b100: begin // LBU: è¯»1å­—èŠ‚ï¼Œé›¶æ‰©å±•
                     byte_val = dmem[addr];
                     data_out = {24'b0, byte_val};
                 end
-                3'b101: begin // LHU: ¶Á2×Ö½Ú£¬ÁãÀ©Õ¹
+                3'b101: begin // LHU: è¯»2å­—èŠ‚ï¼Œé›¶æ‰©å±•
                     //reg [15:0] half_val;
                     half_val = { dmem[addr + 1], dmem[addr] };
                     data_out = {16'b0, half_val};
@@ -59,18 +59,18 @@ module mem_stage(
         end
     end
     
-    // Ğ´´æ´¢Æ÷£ºÍ¬²½Ğ´ÔÚÊ±ÖÓÉÏÉıÑØÖ´ĞĞ
+    // å†™å­˜å‚¨å™¨ï¼šåŒæ­¥å†™åœ¨æ—¶é’Ÿä¸Šå‡æ²¿æ‰§è¡Œ
     always @(posedge clk) begin
         if (mem_write) begin
             case (mem_op)
-                3'b000: begin // SB: Ğ´1×Ö½Ú
+                3'b000: begin // SB: å†™1å­—èŠ‚
                     dmem[addr] <= store_val[7:0];
                 end
-                3'b001: begin // SH: Ğ´2×Ö½Ú
+                3'b001: begin // SH: å†™2å­—èŠ‚
                     dmem[addr]   <= store_val[7:0];
                     dmem[addr+1] <= store_val[15:8];
                 end
-                3'b010: begin // SW: Ğ´4×Ö½Ú
+                3'b010: begin // SW: å†™4å­—èŠ‚
                     dmem[addr]   <= store_val[7:0];
                     dmem[addr+1] <= store_val[15:8];
                     dmem[addr+2] <= store_val[23:16];
