@@ -52,7 +52,7 @@ module id_stage(
             //regs[2] <= 32'd128;  // ³õÊ¼»¯x2 (sp) = 128:contentReference[oaicite:26]{index=26}
         end else begin
             // Ð´»Ø½×¶Î - ÔÚÊ±ÖÓÉÏÉýÑØÐ´¼Ä´æÆ÷
-            if (wb_reg_write /*&& wb_rd_idx != 5'd0*/) begin
+            if (wb_reg_write && wb_rd_idx != 5'd0) begin
                 regs[wb_rd_idx] <= wb_data_in;
             end
             //dbg_reg_val <= regs[dbg_reg_idx];

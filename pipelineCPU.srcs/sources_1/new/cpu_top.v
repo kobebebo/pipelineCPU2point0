@@ -118,7 +118,7 @@ module cpu_top(
     
     // IF阶段取指：组合逻辑从指令存储器读取当前PC地址的指令
     assign if_instr = inst_mem[pc[31:2]]; 
-    assign if_pc_curr = if_instr;  // 当前PC值输出（用于调试显示）
+    assign if_pc_curr = pc/4;  // 当前PC值输出（用于调试显示）
     
     // 由于指令存储器按字寻址，这里假设pc按字对齐，使用pc[31:2]做索引
     // Vivado综合时会将此推断为块RAM ROM。
@@ -177,8 +177,7 @@ module cpu_top(
         .hazard_stall   (hazard_stall),
         .hazard_flush   (hazard_flush)
     );
-    // Branch taken in EX stage requires flushing ID/EX stage
-    wire branch_flush = id_ex_branch|id_ex_jump[1]|id_ex_jump[0]|id_branch|id_jump[0]|id_jump[1];
+    
     // ID -> ID/EX 流水寄存器
     always @(posedge clk_cpu or posedge reset) begin
         if (reset) begin
@@ -200,7 +199,7 @@ module cpu_top(
             id_ex_alu_src1_pc<= 1'b0;
             id_ex_alu_src2_imm<=1'b0;
         end else begin
-            if (hazard_flush || branch_flush) begin
+            if (hazard_flush ) begin
                 // 插入气泡：将ID/EX清零（视作 NOP 指令）
                 id_ex_pc         <= 32'b0;
                 id_ex_rs1_val    <= 32'b0;
