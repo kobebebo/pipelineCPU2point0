@@ -13,7 +13,7 @@ module cpu_top(
     wire reset = ~rstn;  // 将低有效复位转换为高有效的reset信号
 
     // 调试/控制信号
-    wire debug_pause   = sw_i[0];      // =1暂停CPU运行
+    wire debug_pause   = sw_i[13];      // =1暂停CPU运行
     wire display_regs  = sw_i[14];     // =1显示寄存器
     wire fast_clk_sel  = sw_i[15];     // =1使用原始时钟
 
@@ -177,7 +177,8 @@ module cpu_top(
         .hazard_stall   (hazard_stall),
         .hazard_flush   (hazard_flush)
     );
-    
+    // Branch taken in EX stage requires flushing ID/EX stage
+    wire branch_flush = id_ex_branch|id_ex_jump[1]|id_ex_jump[0]|id_branch|id_jump[0]|id_jump[1];
     // ID -> ID/EX 流水寄存器
     always @(posedge clk_cpu or posedge reset) begin
         if (reset) begin
@@ -199,7 +200,7 @@ module cpu_top(
             id_ex_alu_src1_pc<= 1'b0;
             id_ex_alu_src2_imm<=1'b0;
         end else begin
-            if (hazard_flush) begin
+            if (hazard_flush || branch_flush) begin
                 // 插入气泡：将ID/EX清零（视作 NOP 指令）
                 id_ex_pc         <= 32'b0;
                 id_ex_rs1_val    <= 32'b0;

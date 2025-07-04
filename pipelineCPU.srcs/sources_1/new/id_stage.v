@@ -49,10 +49,10 @@ module id_stage(
             for (i=0; i<32; i=i+1) begin
                 regs[i] <= 32'b0;
             end
-            regs[2] <= 32'd128;  // 初始化x2 (sp) = 128:contentReference[oaicite:26]{index=26}
+            //regs[2] <= 32'd128;  // 初始化x2 (sp) = 128:contentReference[oaicite:26]{index=26}
         end else begin
             // 写回阶段 - 在时钟上升沿写寄存器
-            if (wb_reg_write && wb_rd_idx != 5'd0) begin
+            if (wb_reg_write /*&& wb_rd_idx != 5'd0*/) begin
                 regs[wb_rd_idx] <= wb_data_in;
             end
             //dbg_reg_val <= regs[dbg_reg_idx];
