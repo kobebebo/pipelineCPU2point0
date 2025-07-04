@@ -1,29 +1,29 @@
 `timescale 1ns / 1ps
 module id_stage(
-    input  wire [31:0] instr,        // À´×ÔIF½×¶ÎµÄÖ¸Áî´úÂë
-    input  wire [31:0] pc,           // À´×ÔIF½×¶ÎµÄµ±Ç°Ö¸ÁîµØÖ·£¨PC£©
-    output wire [4:0]  rs1, rs2, rd, // Ô´¼Ä´æÆ÷±àºÅ(rs1, rs2)ºÍÄ¿±ê¼Ä´æÆ÷±àºÅ(rd)
-    output reg  [31:0] imm,          // Á¢¼´ÊıÀ©Õ¹Öµ
-    output reg         reg_write,    // ÊÇ·ñĞ´»Ø¼Ä´æÆ÷
-    output reg         mem_read,     // ÊÇ·ñ·Ã´æ¶ÁÈ¡
-    output reg         mem_write,    // ÊÇ·ñ·Ã´æĞ´Èë
-    output reg  [2:0]  mem_op,       // ´æ´¢Æ÷²Ù×÷ÀàĞÍ£ºÓÃÓÚÇø·ÖLB/LH/LWµÈ£¨funct3Ö±½Ó×÷Îª±êÊ¶£©
-    output reg         branch,       // ÊÇ·ñÎª·ÖÖ§Ö¸Áî£¨Ìõ¼şÌø×ª£©
-    output reg  [1:0]  jump,         // ÊÇ·ñÎªÎŞÌõ¼şÌø×ªÖ¸Áî£¨JAL/JALR£©[1]=jal,[0]=jalr
-    output reg  [3:0]  alu_op,       // ALU ²Ù×÷Ñ¡ÔñÂë£¨ÓÉÖ¸Áî¹¦ÄÜÈ·¶¨£¬×Ô¶¨Òå±àÂë4Î»£©
-    output reg         alu_src1_pc,  // ALU²Ù×÷Êı1À´Ô´£º1=Ê¹ÓÃPCÖµ, 0=Ê¹ÓÃ¼Ä´æÆ÷rs1Öµ
-    output reg         alu_src2_imm, // ALU²Ù×÷Êı2À´Ô´£º1=Ê¹ÓÃÁ¢¼´Êı, 0=Ê¹ÓÃ¼Ä´æÆ÷rs2Öµ
-    output wire [31:0] rs1_val, rs2_val, // ´Ó¼Ä´æÆ÷¶Ñ¶ÁÈ¡µÄÔ´²Ù×÷ÊıÖµ
-    input  wire [4:0]  wb_rd_idx,    // Ğ´»Ø½×¶ÎÒªĞ´ÈëµÄ¼Ä´æÆ÷ºÅ
-    input  wire [31:0] wb_data_in,   // Ğ´»ØµÄÊı¾İ
-    input  wire        wb_reg_write, // Ğ´»ØÊ¹ÄÜĞÅºÅ
+    input  wire [31:0] instr,        // æ¥è‡ªIFé˜¶æ®µçš„æŒ‡ä»¤ä»£ç 
+    input  wire [31:0] pc,           // æ¥è‡ªIFé˜¶æ®µçš„å½“å‰æŒ‡ä»¤åœ°å€ï¼ˆPCï¼‰
+    output wire [4:0]  rs1, rs2, rd, // æºå¯„å­˜å™¨ç¼–å·(rs1, rs2)å’Œç›®æ ‡å¯„å­˜å™¨ç¼–å·(rd)
+    output reg  [31:0] imm,          // ç«‹å³æ•°æ‰©å±•å€¼
+    output reg         reg_write,    // æ˜¯å¦å†™å›å¯„å­˜å™¨
+    output reg         mem_read,     // æ˜¯å¦è®¿å­˜è¯»å–
+    output reg         mem_write,    // æ˜¯å¦è®¿å­˜å†™å…¥
+    output reg  [2:0]  mem_op,       // å­˜å‚¨å™¨æ“ä½œç±»å‹ï¼šç”¨äºåŒºåˆ†LB/LH/LWç­‰ï¼ˆfunct3ç›´æ¥ä½œä¸ºæ ‡è¯†ï¼‰
+    output reg         branch,       // æ˜¯å¦ä¸ºåˆ†æ”¯æŒ‡ä»¤ï¼ˆæ¡ä»¶è·³è½¬ï¼‰
+    output reg  [1:0]  jump,         // æ˜¯å¦ä¸ºæ— æ¡ä»¶è·³è½¬æŒ‡ä»¤ï¼ˆJAL/JALRï¼‰[1]=jal,[0]=jalr
+    output reg  [3:0]  alu_op,       // ALU æ“ä½œé€‰æ‹©ç ï¼ˆç”±æŒ‡ä»¤åŠŸèƒ½ç¡®å®šï¼Œè‡ªå®šä¹‰ç¼–ç 4ä½ï¼‰
+    output reg         alu_src1_pc,  // ALUæ“ä½œæ•°1æ¥æºï¼š1=ä½¿ç”¨PCå€¼, 0=ä½¿ç”¨å¯„å­˜å™¨rs1å€¼
+    output reg         alu_src2_imm, // ALUæ“ä½œæ•°2æ¥æºï¼š1=ä½¿ç”¨ç«‹å³æ•°, 0=ä½¿ç”¨å¯„å­˜å™¨rs2å€¼
+    output wire [31:0] rs1_val, rs2_val, // ä»å¯„å­˜å™¨å †è¯»å–çš„æºæ“ä½œæ•°å€¼
+    input  wire [4:0]  wb_rd_idx,    // å†™å›é˜¶æ®µè¦å†™å…¥çš„å¯„å­˜å™¨å·
+    input  wire [31:0] wb_data_in,   // å†™å›çš„æ•°æ®
+    input  wire        wb_reg_write, // å†™å›ä½¿èƒ½ä¿¡å·
     input  wire        clk,
     input  wire        reset,
-    input  wire        hazard_stall, // Ã°ÏÕÔİÍ£ĞÅºÅ£¬¸ßµçÆ½±íÊ¾±¾ÖÜÆÚID½×¶ÎÖ¸ÁîÍ£¶Ù£¬²»¸üĞÂÊä³ö
-    input  wire [4:0]  dbg_reg_idx,  // µ÷ÊÔ¶ÁÈ¡µÄ¼Ä´æÆ÷±àºÅ
+    input  wire        hazard_stall, // å†’é™©æš‚åœä¿¡å·ï¼Œé«˜ç”µå¹³è¡¨ç¤ºæœ¬å‘¨æœŸIDé˜¶æ®µæŒ‡ä»¤åœé¡¿ï¼Œä¸æ›´æ–°è¾“å‡º
+    input  wire [4:0]  dbg_reg_idx,  // è°ƒè¯•è¯»å–çš„å¯„å­˜å™¨ç¼–å·
     output  [31:0] dbg_reg_val
 );
-    // ½«Ö¸Áî×Ö¶Î²ğ·Ö
+    // å°†æŒ‡ä»¤å­—æ®µæ‹†åˆ†
     wire [6:0] opcode = instr[6:0];
     wire [4:0] rs1_idx = instr[19:15];
     wire [4:0] rs2_idx = instr[24:20];
@@ -35,22 +35,22 @@ module id_stage(
     assign rs2 = rs2_idx;
     assign rd  = rd_idx;
     
-    // ¼Ä´æÆ÷¶Ñ¶¨Òå (32 x 32Î» ¼Ä´æÆ÷)
+    // å¯„å­˜å™¨å †å®šä¹‰ (32 x 32ä½ å¯„å­˜å™¨)
     reg [31:0] regs [0:31];
     integer i;
-    // Òì²½¶Á£¬Í¬²½Ğ´ÊµÏÖ£º
+    // å¼‚æ­¥è¯»ï¼ŒåŒæ­¥å†™å®ç°ï¼š
     assign rs1_val = regs[rs1_idx];
     assign rs2_val = regs[rs2_idx];
     assign dbg_reg_val = regs[dbg_reg_idx];
     
-    // ³õÊ¼»¯¼Ä´æÆ÷£¨¸´Î»Ê±£©
+    // åˆå§‹åŒ–å¯„å­˜å™¨ï¼ˆå¤ä½æ—¶ï¼‰
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             for (i=0; i<32; i=i+1) begin
                 regs[i] <= 32'b0;
             end
         end else begin
-            // Ğ´»Ø½×¶Î - ÔÚÊ±ÖÓÉÏÉıÑØĞ´¼Ä´æÆ÷
+            // å†™å›é˜¶æ®µ - åœ¨æ—¶é’Ÿä¸Šå‡æ²¿å†™å¯„å­˜å™¨
             if (wb_reg_write && wb_rd_idx != 5'd0) begin
                 regs[wb_rd_idx] <= wb_data_in;
             end
@@ -58,9 +58,9 @@ module id_stage(
         end
     end
    
-    // ¿ØÖÆĞÅºÅÄ¬ÈÏÖµ£¨Ã¿¸öÖÜÆÚ×éºÏÂß¼­¼ÆËã£©
+    // æ§åˆ¶ä¿¡å·é»˜è®¤å€¼ï¼ˆæ¯ä¸ªå‘¨æœŸç»„åˆé€»è¾‘è®¡ç®—ï¼‰
     always @(*) begin
-        // Ä¬ÈÏÖµ£¨´ó¶àÊıĞÅºÅÄ¬ÈÏÎª0£¬ÔÚÆ¥ÅäÖ¸ÁîÊ±ÉèÖÃÎª1£©
+        // é»˜è®¤å€¼ï¼ˆå¤§å¤šæ•°ä¿¡å·é»˜è®¤ä¸º0ï¼Œåœ¨åŒ¹é…æŒ‡ä»¤æ—¶è®¾ç½®ä¸º1ï¼‰
         reg_write   = 1'b0;
         mem_read    = 1'b0;
         mem_write   = 1'b0;
@@ -72,16 +72,16 @@ module id_stage(
         alu_op      = 4'b0000;
         imm         = 32'b0;
         
-        // ÌáÈ¡Ö¸Áî²»Í¬ÀàĞÍµÄÁ¢¼´ÊıÎ»¶Î²¢·ûºÅÀ©Õ¹/¶ÔÆë
+        // æå–æŒ‡ä»¤ä¸åŒç±»å‹çš„ç«‹å³æ•°ä½æ®µå¹¶ç¬¦å·æ‰©å±•/å¯¹é½
         case (opcode)
             7'b0110011: begin
-                // R-type: Ã»ÓĞÁ¢¼´Êı
+                // R-type: æ²¡æœ‰ç«‹å³æ•°
                 imm = 32'b0;
             end
-            7'b0010011, // I-type (ËãÊõ/Âß¼­Á¢¼´Êı ºÍ JALR, LB/LH/LWµÈLoadÀà)
-            7'b0000011, // I-type (LoadÀà)
+            7'b0010011, // I-type (ç®—æœ¯/é€»è¾‘ç«‹å³æ•° å’Œ JALR, LB/LH/LWç­‰Loadç±»)
+            7'b0000011, // I-type (Loadç±»)
             7'b1100111: begin // JALR
-                // IĞÍ£ºimm[11:0] = instr[31:20]£¬·ûºÅÀ©Õ¹ÖÁ32Î»
+                // Iå‹ï¼šimm[11:0] = instr[31:20]ï¼Œç¬¦å·æ‰©å±•è‡³32ä½
                 imm = {{20{instr[31]}}, instr[31:20]};
             end
             7'b0100011: begin
@@ -89,16 +89,16 @@ module id_stage(
                 imm = {{20{instr[31]}}, instr[31:25], instr[11:7]};
             end
             7'b1100011: begin
-                // B-type (Branch): imm[12|10:5|4:1|11] = instr[31|30:25|11:8|7] (12Î»Á¢¼´Êı,×îµÍÎ»0)
+                // B-type (Branch): imm[12|10:5|4:1|11] = instr[31|30:25|11:8|7] (12ä½ç«‹å³æ•°,æœ€ä½ä½0)
                 imm = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
             end
             7'b0110111, // U-type (LUI)
             7'b0010111: begin // U-type (AUIPC)
-                // UĞÍ£ºimm[31:12] = instr[31:12], µÍ12Î»Ìî0
+                // Uå‹ï¼šimm[31:12] = instr[31:12], ä½12ä½å¡«0
                 imm = {instr[31:12], 12'b0};
             end
             7'b1101111: begin
-                // J-type (JAL): imm[20|10:1|11|19:12] = instr[31|30:21|20|19:12] (21Î»º¬·ûºÅ,×îµÍÎ»0)
+                // J-type (JAL): imm[20|10:1|11|19:12] = instr[31|30:21|20|19:12] (21ä½å«ç¬¦å·,æœ€ä½ä½0)
                 imm = {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
             end
             default: begin
@@ -106,19 +106,19 @@ module id_stage(
             end
         endcase
         
-        // ¸ù¾İÖ¸Áî²Ù×÷ÂëºÍ¹¦ÄÜÂëÉú³É¿ØÖÆĞÅºÅ
+        // æ ¹æ®æŒ‡ä»¤æ“ä½œç å’ŒåŠŸèƒ½ç ç”Ÿæˆæ§åˆ¶ä¿¡å·
         case (opcode)
-            7'b0110011: begin  // R-typeÔËËãÖ¸Áî
+            7'b0110011: begin  // R-typeè¿ç®—æŒ‡ä»¤
                 reg_write = 1'b1;
                 alu_src1_pc = 1'b0;
                 alu_src2_imm= 1'b0;
-                // ¸ù¾İ funct3/funct7 ÉèÖÃ alu_op
+                // æ ¹æ® funct3/funct7 è®¾ç½® alu_op
                 case (funct3)
                     3'b000: alu_op = (funct7[5] ? 4'b0001  // SUB
                                              : 4'b0000); // ADD
-                    3'b001: alu_op = 4'b0010; // SLL (Âß¼­×óÒÆ)
-                    3'b010: alu_op = 4'b0011; // SLT (ÓĞ·ûºÅ±È½Ï)
-                    3'b011: alu_op = 4'b0100; // SLTU (ÎŞ·ûºÅ±È½Ï)
+                    3'b001: alu_op = 4'b0010; // SLL (é€»è¾‘å·¦ç§»)
+                    3'b010: alu_op = 4'b0011; // SLT (æœ‰ç¬¦å·æ¯”è¾ƒ)
+                    3'b011: alu_op = 4'b0100; // SLTU (æ— ç¬¦å·æ¯”è¾ƒ)
                     3'b100: alu_op = 4'b0101; // XOR
                     3'b101: alu_op = (funct7[5] ? 4'b0111  // SRA
                                              : 4'b0110); // SRL
@@ -127,10 +127,10 @@ module id_stage(
                     default: alu_op = 4'b0000;
                 endcase
             end
-            7'b0010011: begin  // I-type ËãÊõ/Âß¼­Á¢¼´ÊıÖ¸Áî
+            7'b0010011: begin  // I-type ç®—æœ¯/é€»è¾‘ç«‹å³æ•°æŒ‡ä»¤
                 reg_write = 1'b1;
                 alu_src1_pc = 1'b0;
-                alu_src2_imm= 1'b1;  // µÚ¶ş²Ù×÷ÊıÀ´×ÔÁ¢¼´Êı
+                alu_src2_imm= 1'b1;  // ç¬¬äºŒæ“ä½œæ•°æ¥è‡ªç«‹å³æ•°
                 case (funct3)
                     3'b000: alu_op = 4'b0000; // ADDI -> ADD
                     3'b010: alu_op = 4'b0011; // SLTI -> SLT
@@ -139,74 +139,74 @@ module id_stage(
                     3'b110: alu_op = 4'b1000; // ORI -> OR
                     3'b111: alu_op = 4'b1001; // ANDI -> AND
                     3'b001: begin 
-                        // SLLI: imm[5:0]µÄ¸ßÎ»Ó¦Îª0£¨È·±£Âß¼­ÒÆÎ»£©
+                        // SLLI: imm[5:0]çš„é«˜ä½åº”ä¸º0ï¼ˆç¡®ä¿é€»è¾‘ç§»ä½ï¼‰
                         alu_op = 4'b0010; // SLL
                     end
                     3'b101: begin 
-                        // SRLI/SRAI: ¸ù¾İÁ¢¼´Êı¸ßÎ»Çø·Ö
+                        // SRLI/SRAI: æ ¹æ®ç«‹å³æ•°é«˜ä½åŒºåˆ†
                         alu_op = (instr[31:25] == 7'b0100000) ? 4'b0111 // SRAI
                                                               : 4'b0110; // SRLI
                     end
                     default: alu_op = 4'b0000;
                 endcase
             end
-            7'b0000011: begin  // I-type LoadÖ¸Áî (LB/LH/LW/LBU/LHU)
+            7'b0000011: begin  // I-type LoadæŒ‡ä»¤ (LB/LH/LW/LBU/LHU)
                 reg_write = 1'b1;
                 mem_read  = 1'b1;
                 alu_src1_pc = 1'b0;
-                alu_src2_imm= 1'b1; // µØÖ· = rs1 + imm
-                alu_op    = 4'b0000; // µØÖ·¼ÆËãÊ¹ÓÃADD
-                mem_op    = funct3;  // ±£´æloadÀàĞÍ£¬ºóĞøÓÃÓÚÊı¾İÀ©Õ¹
+                alu_src2_imm= 1'b1; // åœ°å€ = rs1 + imm
+                alu_op    = 4'b0000; // åœ°å€è®¡ç®—ä½¿ç”¨ADD
+                mem_op    = funct3;  // ä¿å­˜loadç±»å‹ï¼Œåç»­ç”¨äºæ•°æ®æ‰©å±•
             end
-            7'b0100011: begin  // S-type StoreÖ¸Áî (SB/SH/SW)
+            7'b0100011: begin  // S-type StoreæŒ‡ä»¤ (SB/SH/SW)
                 mem_write = 1'b1;
                 alu_src1_pc = 1'b0;
-                alu_src2_imm= 1'b1; // µØÖ· = rs1 + imm
-                alu_op    = 4'b0000; // µØÖ·¼ÆËãÊ¹ÓÃADD
-                mem_op    = funct3;  // ±£´æstoreÀàĞÍ£¬ºóĞøÓÃÓÚĞ´´æ´¢Æ÷×Ö½ÚÊı
+                alu_src2_imm= 1'b1; // åœ°å€ = rs1 + imm
+                alu_op    = 4'b0000; // åœ°å€è®¡ç®—ä½¿ç”¨ADD
+                mem_op    = funct3;  // ä¿å­˜storeç±»å‹ï¼Œåç»­ç”¨äºå†™å­˜å‚¨å™¨å­—èŠ‚æ•°
             end
-            7'b1100011: begin  // B-type ·ÖÖ§Ö¸Áî (BEQ/BNE/BLT/BGE/BLTU/BGEU)
+            7'b1100011: begin  // B-type åˆ†æ”¯æŒ‡ä»¤ (BEQ/BNE/BLT/BGE/BLTU/BGEU)
                 branch   = 1'b1;
-                // ·ÖÖ§²»Ğ´¼Ä´æÆ÷£¬²»·Ã´æ£¬µ«ĞèÒª¼ÆËã·ÖÖ§Ìõ¼ş
+                // åˆ†æ”¯ä¸å†™å¯„å­˜å™¨ï¼Œä¸è®¿å­˜ï¼Œä½†éœ€è¦è®¡ç®—åˆ†æ”¯æ¡ä»¶
                 reg_write = 1'b0;
                 alu_src1_pc = 1'b0;
                 alu_src2_imm= 1'b0;
-                alu_op    = 4'b0000; // ALUÄ¬ÈÏADD»òSUB¾ù¿É£¬ÕâÀï²»Êµ¼ÊÓÃALUÊä³ö
-                // ·ÖÖ§Ìõ¼şÅĞ¶Ï½«ÔÚEX½×¶Î¸ù¾İrs1_val/rs2_valºÍfunct3½øĞĞ
+                alu_op    = 4'b0000; // ALUé»˜è®¤ADDæˆ–SUBå‡å¯ï¼Œè¿™é‡Œä¸å®é™…ç”¨ALUè¾“å‡º
+                // åˆ†æ”¯æ¡ä»¶åˆ¤æ–­å°†åœ¨EXé˜¶æ®µæ ¹æ®rs1_val/rs2_valå’Œfunct3è¿›è¡Œ
             end
-            7'b1101111: begin  // J-type ÎŞÌõ¼şÌø×ª (JAL)
+            7'b1101111: begin  // J-type æ— æ¡ä»¶è·³è½¬ (JAL)
                 jump[1]     = 1'b1;
-                reg_write= 1'b1;  // JALĞèÒªĞ´»ØÁ´½ÓµØÖ·µ½rd
+                reg_write= 1'b1;  // JALéœ€è¦å†™å›é“¾æ¥åœ°å€åˆ°rd
                 alu_src1_pc = 1'b0;
                 alu_src2_imm= 1'b0;
                 alu_op   = 4'b0000;
-                // JAL: rd = PC+4 (Á´½ÓµØÖ·)£¬PC½«Ìø×ªÖÁ PC + imm (Ä¿±êµØÖ·)
-                // Á´½ÓµØÖ·µÄ¼ÆËã¿ÉÔÚEX½×¶ÎÍê³É
+                // JAL: rd = PC+4 (é“¾æ¥åœ°å€)ï¼ŒPCå°†è·³è½¬è‡³ PC + imm (ç›®æ ‡åœ°å€)
+                // é“¾æ¥åœ°å€çš„è®¡ç®—å¯åœ¨EXé˜¶æ®µå®Œæˆ
             end
-            7'b1100111: begin  // I-type ¼Ä´æÆ÷Ìø×ª (JALR)
+            7'b1100111: begin  // I-type å¯„å­˜å™¨è·³è½¬ (JALR)
                 jump[0]     = 1'b1;
-                reg_write= 1'b1;  // JALRĞ´»ØÁ´½ÓµØÖ·
+                reg_write= 1'b1;  // JALRå†™å›é“¾æ¥åœ°å€
                 alu_src1_pc = 1'b0;
-                alu_src2_imm= 1'b1; // ¿ÉÒÔÏÈÓÃALU¼ÆËãÄ¿±êµØÖ· = rs1 + imm
+                alu_src2_imm= 1'b1; // å¯ä»¥å…ˆç”¨ALUè®¡ç®—ç›®æ ‡åœ°å€ = rs1 + imm
                 alu_op   = 4'b0000;
-                // JALR: rd = PC+4£¬ ĞÂPC = (rs1 + imm) & ~1
-                // PC+4 ºÍ ĞÂPC ¼ÆËãÔÚEX½×¶Î´¦Àí
+                // JALR: rd = PC+4ï¼Œ æ–°PC = (rs1 + imm) & ~1
+                // PC+4 å’Œ æ–°PC è®¡ç®—åœ¨EXé˜¶æ®µå¤„ç†
             end
             7'b0110111: begin  // U-type LUI
                 reg_write= 1'b1;
                 alu_src1_pc = 1'b0;
                 alu_src2_imm= 1'b1;
-                // LUI: ½«imm£¨¸ß20Î»£©¼ÓÔØµ½rd¡£¿ÉÊÓ×÷ALUÔËËã: 0 + imm
-                alu_op   = 4'b1010; // ×Ô¶¨Òå PASSB ²Ù×÷Âë£¬ÈÃALUÊä³öµÚ¶ş²Ù×÷Êı£¨imm£©
+                // LUI: å°†immï¼ˆé«˜20ä½ï¼‰åŠ è½½åˆ°rdã€‚å¯è§†ä½œALUè¿ç®—: 0 + imm
+                alu_op   = 4'b1010; // è‡ªå®šä¹‰ PASSB æ“ä½œç ï¼Œè®©ALUè¾“å‡ºç¬¬äºŒæ“ä½œæ•°ï¼ˆimmï¼‰
             end
             7'b0010111: begin  // U-type AUIPC
                 reg_write= 1'b1;
-                alu_src1_pc = 1'b1;  // µÚÒ»¸ö²Ù×÷ÊıÓÃPC
-                alu_src2_imm= 1'b1;  // µÚ¶ş²Ù×÷ÊıÓÃimm
-                alu_op   = 4'b0000;  // ALU×ö¼Ó·¨¼ÆËã PC + imm
+                alu_src1_pc = 1'b1;  // ç¬¬ä¸€ä¸ªæ“ä½œæ•°ç”¨PC
+                alu_src2_imm= 1'b1;  // ç¬¬äºŒæ“ä½œæ•°ç”¨imm
+                alu_op   = 4'b0000;  // ALUåšåŠ æ³•è®¡ç®— PC + imm
             end
             default: begin
-                // Î´¶¨ÒåÖ¸Áî£¨°üÀ¨ÏµÍ³Ö¸ÁîECALL/EBREAKµÈ£©£º²»Ö´ĞĞ²Ù×÷
+                // æœªå®šä¹‰æŒ‡ä»¤ï¼ˆåŒ…æ‹¬ç³»ç»ŸæŒ‡ä»¤ECALL/EBREAKç­‰ï¼‰ï¼šä¸æ‰§è¡Œæ“ä½œ
                 reg_write= 1'b0;
                 mem_read = 1'b0;
                 mem_write= 1'b0;
@@ -216,8 +216,8 @@ module id_stage(
             end
         endcase
         
-        // ÈçĞèÒª£¬¿ÉÒÔÔÚ´ËÌí¼Óhazard_stall¶Ô¿ØÖÆĞÅºÅµÄÓ°Ïì£¨ÀıÈçÓöµ½ÔİÍ£Ôò±£³ÖÉÏÖÜÆÚĞÅºÅ£©¡£
-        // È»¶øÔÚ±¾Éè¼ÆÖĞ£¬hazard_stallÖ÷ÒªÍ¨¹ı¶³½áÁ÷Ë®¼Ä´æÆ÷ÊµÏÖ£¬ÎŞĞèÔÚ´Ë¶îÍâ´¦Àí×éºÏÂß¼­¡£
+        // å¦‚éœ€è¦ï¼Œå¯ä»¥åœ¨æ­¤æ·»åŠ hazard_stallå¯¹æ§åˆ¶ä¿¡å·çš„å½±å“ï¼ˆä¾‹å¦‚é‡åˆ°æš‚åœåˆ™ä¿æŒä¸Šå‘¨æœŸä¿¡å·ï¼‰ã€‚
+        // ç„¶è€Œåœ¨æœ¬è®¾è®¡ä¸­ï¼Œhazard_stallä¸»è¦é€šè¿‡å†»ç»“æµæ°´å¯„å­˜å™¨å®ç°ï¼Œæ— éœ€åœ¨æ­¤é¢å¤–å¤„ç†ç»„åˆé€»è¾‘ã€‚
     end
 
 endmodule
