@@ -50,7 +50,7 @@ module ex_stage(
         if (ex_mem_reg_write && ex_mem_rd != 5'd0 && ex_mem_rd == rs1_idx) begin
             op_a = ex_mem_alu_result;  // 来自上条指令EX/MEM阶段的结果
         end else if (mem_wb_reg_write && mem_wb_rd != 5'd0 && mem_wb_rd == rs1_idx) begin
-            op_a = mem_wb_value;       // 来自两条前指令MEM/WB阶段的结果
+            op_a = mem_wb_value;       // 来自两条前指令MEM/WB阶段的结果   
         end else begin
             op_a = rs1_val;            // 无前递，直接用寄存器值
         end

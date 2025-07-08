@@ -17,7 +17,7 @@ module cpu_top(
 
     // 时钟分频：当sw_i[15]=0时使用慢速时钟，便于观察
     wire slow_clk;
-    clock_divider #(.WIDTH(26)) div_u(
+    clock_divider #(.WIDTH(27)) div_u(
         .clk_in (clk),
         .reset  (reset),
         .clk_out(slow_clk)
@@ -31,32 +31,32 @@ module cpu_top(
     // IF阶段 -> IF/ID流水寄存器
     wire [31:0] if_pc_next;      // 计算出的下一条PC地址
     wire [31:0] if_instr;        // 取出的指令
-    wire [31:0] if_pc_curr;      // 当前PC值（用于输出/调试）
+    reg [31:0] if_pc_curr;      // 当前PC值（用于输出/调试）
     // IF/ID -> ID阶段
     reg  [31:0] if_id_instr;     // IF/ID 寄存的指令
     reg  [31:0] if_id_pc;        // IF/ID 寄存的当前指令PC
     // ID阶段 -> ID/EX流水寄存器
     wire [4:0]  id_rs1, id_rs2, id_rd;      // 寄存器编号
     wire [31:0] id_rs1_val, id_rs2_val;     // 寄存器堆读出的源操作数值
-    wire [31:0] id_imm;                    // 立即数扩展
+    wire        [31:0] id_imm;                    // 立即数扩展
     wire        id_reg_write, id_mem_read, id_mem_write;
-    wire [2:0]  id_mem_op;                 // 存储器操作类型（例如区分字节/半字/字，及有符号/无符号）
+    wire [2:0]  id_mem_op;                 // 存储器操作类型
     wire        id_branch;      //是否为分支
     wire [1:0]  id_jump;        // 是否为无条件跳转
-    wire [3:0]  id_alu_op;                 // ALU 操作码控制（自定义）
+    wire [3:0]  id_alu_op;                 // ALU 操作码控制
     wire        id_alu_src1_pc;            // ALU操作数A选择：1表示使用当前PC，0表示使用寄存器rs1值
     wire        id_alu_src2_imm;           // ALU操作数B选择：1表示使用立即数，0表示使用寄存器rs2值
     // 冒险检测单元输出
     wire        hazard_stall;   // 流水线暂停（插入等待周期）
     wire        hazard_flush;   // EX阶段插入气泡（将ID/EX清除为NOP）
     // 调试显示相关
-    reg  [4:0]  dbg_reg_idx;
+    //reg  [4:0]  dbg_reg_idx;
     wire [31:0] dbg_reg_val;
     // ID/EX -> EX阶段
     reg [31:0] id_ex_pc;
     reg [31:0] id_ex_rs1_val;
     reg [31:0] id_ex_rs2_val;
-    reg [31:0] id_ex_imm;
+    reg        [31:0] id_ex_imm;
     reg [4:0]  id_ex_rs1, id_ex_rs2, id_ex_rd;
     reg        id_ex_reg_write, id_ex_mem_read, id_ex_mem_write;
     reg [2:0]  id_ex_mem_op;
@@ -85,8 +85,6 @@ module cpu_top(
     reg [31:0] mem_wb_value_r;
     reg [4:0]  mem_wb_rd;
     reg        mem_wb_reg_write;
-    //wire       is_BRANCH;//new add,是否是分支类
-    //assign is_BRANCH=id_jump[0]|id_jump[1]|id_branch|id_ex_jump[0]|id_ex_jump[1]|id_ex_branch;//上条和上上条是否为分支指令
 
 
     // 实例化各阶段和模块
@@ -118,7 +116,11 @@ module cpu_top(
     
     // IF阶段取指：组合逻辑从指令存储器读取当前PC地址的指令
     assign if_instr = inst_mem[pc[31:2]]; 
-    assign if_pc_curr = pc/4;  // 当前第几条指令（用于调试显示）
+    //assign if_pc_curr = pc/4+1;  // 当前第几条指令（用于调试显示）
+    
+    always @(posedge clk_cpu) begin
+        if_pc_curr<=pc/4;
+    end
     
     // 由于指令存储器按字寻址，这里假设pc按字对齐，使用pc[31:2]做索引
     // Vivado综合时会将此推断为块RAM ROM
@@ -141,8 +143,11 @@ module cpu_top(
         end
     end
     
+    //验收
+     wire [4:0]dbg_reg_idx=4'b1;//不验收就去掉
     // 实例化指令译码/控制单元和寄存器堆 (ID阶段)
     id_stage id_stage_u (
+        .ex_rd(id_ex_rd),.mem_rd(ex_mem_rd),
         .instr       (if_id_instr),
         .pc          (if_id_pc),
         .rs1         (id_rs1),
@@ -344,8 +349,8 @@ module cpu_top(
     // -------------------------------
     // LED显示示例：直接显示x3寄存器低16位
     assign led_o = id_stage_u.regs[3][15:0];
-
     // 调试寄存器索引循环
+    /*
     reg [31:0] disp_cnt;
     always @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -365,7 +370,7 @@ module cpu_top(
             dbg_reg_idx <= 0;
         end
     end
-
+*/
     // PC和寄存器值数字准备
     wire [3:0] pc_d0 = if_pc_curr[3:0];
     wire [3:0] pc_d1 = if_pc_curr[7:4];
@@ -376,22 +381,29 @@ module cpu_top(
     wire [3:0] pc_d6 = if_pc_curr[27:24];
     wire [3:0] pc_d7 = if_pc_curr[31:28];
 
-    wire [3:0] bcd0,bcd1,bcd2,bcd3,bcd4,bcd5;
+    wire [3:0] bcd0,bcd1,bcd2,bcd3,bcd5,bcd6,bcd7;
     bin_to_bcd6 bcd_u(
         .bin(dbg_reg_val),
-        .d5(bcd5),.d4(bcd4),.d3(bcd3),.d2(bcd2),.d1(bcd1),.d0(bcd0)
+        .addr(if_pc_curr),
+        .d7(bcd7),.d6(bcd6),.d5(bcd5),.d3(bcd3),.d2(bcd2),.d1(bcd1),.d0(bcd0)
     );
 
-    reg [3:0] dig0,dig1,dig2,dig3,dig4,dig5,dig6,dig7;
+    reg [3:0] dig0,dig1,dig2,dig3,dig5,dig6,dig7;
+    reg [4:0]dig4;
     always @(*) begin
-        if (display_regs) begin
-            dig0 = bcd0; dig1 = bcd1; dig2 = bcd2; dig3 = bcd3; dig4 = bcd4; dig5 = bcd5;
+        /*if (display_regs) begin
+            dig0 = bcd0; dig1 = bcd1; dig2 = bcd2; dig3 = bcd3; dig5 = bcd5; dig4 = 5'b11111;//4号数码管是分隔符H
             dig6 = dbg_reg_idx[3:0];
             dig7 = {3'b0, dbg_reg_idx[4]};
         end else begin
             dig0 = pc_d0; dig1 = pc_d1; dig2 = pc_d2; dig3 = pc_d3;
             dig4 = pc_d4; dig5 = pc_d5; dig6 = pc_d6; dig7 = pc_d7;
-        end
+        end*/
+        
+        dig0 = bcd0; dig1 = bcd1; dig2 = bcd2; dig3 = bcd3; 
+        dig4 = 5'b11111;//4号数码管是分隔符H
+        dig5=bcd5;dig6=bcd6;dig7=bcd7;
+        
     end
 
     // 数码管扫描驱动

@@ -1,9 +1,10 @@
 `timescale 1ns / 1ps
 module id_stage(
+    input wire [4:0] ex_rd,mem_rd,
     input  wire [31:0] instr,        // 来自IF阶段的指令代码
     input  wire [31:0] pc,           // 来自IF阶段的当前指令地址（PC）
     output wire [4:0]  rs1, rs2, rd, // 源寄存器编号(rs1, rs2)和目标寄存器编号(rd)
-    output reg  [31:0] imm,          // 立即数扩展值
+    output reg         [31:0] imm,          // 立即数扩展值
     output reg         reg_write,    // 是否写回寄存器
     output reg         mem_read,     // 是否访存读取
     output reg         mem_write,    // 是否访存写入
@@ -13,7 +14,7 @@ module id_stage(
     output reg  [3:0]  alu_op,       // ALU 操作选择码（由指令功能确定，自定义编码4位）
     output reg         alu_src1_pc,  // ALU操作数1来源：1=使用PC值, 0=使用寄存器rs1值
     output reg         alu_src2_imm, // ALU操作数2来源：1=使用立即数, 0=使用寄存器rs2值
-    output wire [31:0] rs1_val, rs2_val, // 从寄存器堆读取的源操作数值
+    output reg [31:0] rs1_val, rs2_val, // 从寄存器堆读取的源操作数值//******wire->reg
     input  wire [4:0]  wb_rd_idx,    // 写回阶段要写入的寄存器号
     input  wire [31:0] wb_data_in,   // 写回的数据
     input  wire        wb_reg_write, // 写回使能信号
@@ -38,10 +39,24 @@ module id_stage(
     // 寄存器堆定义 (32 x 32位 寄存器)
     reg [31:0] regs [0:31];
     integer i;
-    // 异步读，同步写实现：
-    assign rs1_val = regs[rs1_idx];
-    assign rs2_val = regs[rs2_idx];
+    // 异步读，同步写实现：********
+    //assign rs1_val = regs[rs1_idx];
+    //assign rs2_val = regs[rs2_idx];
     assign dbg_reg_val = regs[dbg_reg_idx];
+    
+    
+    //**********修改********
+    always@(*)begin
+        if(wb_reg_write==1'b1&&wb_rd_idx!=5'b0&&wb_rd_idx==rs1_idx&&
+                        ex_rd!=rs1_idx&&mem_rd!=rs1_idx)
+            rs1_val=wb_data_in;//来自上数第三条指令的写回结果
+        else rs1_val=regs[rs1_idx];
+        
+        if(wb_reg_write==1'b1&&wb_rd_idx!=5'b0&&wb_rd_idx==rs2_idx&&
+                        ex_rd!=rs2_idx&&mem_rd!=rs2_idx)
+            rs2_val=wb_data_in;//来自上数第三条指令的写回结果
+        else rs2_val=regs[rs2_idx];
+    end
     
     // 初始化寄存器（复位时）
     always @(posedge clk or posedge reset) begin
@@ -172,6 +187,7 @@ module id_stage(
                 alu_src1_pc = 1'b0;
                 alu_src2_imm= 1'b0;
                 alu_op    = 4'b0000; // ALU默认ADD或SUB均可，这里不实际用ALU输出
+                mem_op    = funct3;
                 // 分支条件判断将在EX阶段根据rs1_val/rs2_val和funct3进行
             end
             7'b1101111: begin  // J-type 无条件跳转 (JAL)

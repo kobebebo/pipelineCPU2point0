@@ -6,7 +6,7 @@ module seven_seg_driver(
     input wire [3:0] d1,
     input wire [3:0] d2,
     input wire [3:0] d3,
-    input wire [3:0] d4,
+    input wire [4:0] d4,
     input wire [3:0] d5,
     input wire [3:0] d6,
     input wire [3:0] d7,
@@ -67,7 +67,7 @@ module seven_seg_driver(
       1 : seg_data_r = i_data_store[7:4];
       2 : seg_data_r = i_data_store[11:8];
       3 : seg_data_r = i_data_store[15:12];
-      4 : seg_data_r = i_data_store[19:16];
+      4 : seg_data_r = i_data_store[19:15];//
       5 : seg_data_r = i_data_store[23:20];
       6 : seg_data_r = i_data_store[27:24];
       7 : seg_data_r = i_data_store[31:28];
@@ -94,7 +94,8 @@ module seven_seg_driver(
           4'hC : o_seg_r <= 8'hC6;
           4'hD : o_seg_r <= 8'hA1;
           4'hE : o_seg_r <= 8'h86;
-          4'hF : o_seg_r <= 8'h8E;
+          4'hF :o_seg_r <= 8'h8E;
+          default:o_seg_r<=8'h89;
       endcase
       
   assign an = o_sel_r;
