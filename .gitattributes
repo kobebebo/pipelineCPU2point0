@@ -1,0 +1,9 @@
+# 所有文本文件都当做 UTF-8 处理
+* text working-tree-encoding=UTF-8
+
+cpu_top.v   working-tree-encoding=UTF-8
+ex_stage.v  working-tree-encoding=UTF-8
+hazard_unit.v  working-tree-encoding=UTF-8
+id_stage.v  working-tree-encoding=UTF-8
+mem_stage.v  working-tree-encoding=UTF-8
+
